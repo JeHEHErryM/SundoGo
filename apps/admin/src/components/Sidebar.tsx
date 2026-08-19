@@ -47,7 +47,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const sidebar = (
     <div className="flex flex-col h-full bg-slate-900 text-white">
       <div className="flex items-center justify-between h-16 px-4 border-b border-slate-700">
-        <span className="text-lg font-bold tracking-tight">SundoGo Admin</span>
+        <div className="flex items-center gap-2">
+          <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-8 w-auto" />
+          <span className="text-lg font-bold tracking-tight">Admin</span>
+        </div>
         <button onClick={onClose} className="lg:hidden p-1 rounded hover:bg-slate-700">
           <X size={20} />
         </button>

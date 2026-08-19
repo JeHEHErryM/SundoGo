@@ -36,9 +36,7 @@ export default function LoginPage() {
     <div className="flex min-h-dvh flex-col bg-gray-50">
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 px-6 pt-16 pb-20 text-white">
         <div className="flex items-center gap-3 mb-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-500">
-            <span className="text-xl font-bold">SG</span>
-          </div>
+          <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-12 w-auto" />
           <div>
             <h1 className="text-2xl font-bold">SundoGo Driver</h1>
             <p className="text-sm text-slate-300">Sign in to start driving</p>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth.store";
-import { UserPlus, Mail, Lock, Phone, User, Eye, EyeOff, Car } from "lucide-react";
+import { UserPlus, Mail, Lock, Phone, User, Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -37,9 +37,7 @@ export default function RegisterPage() {
       <div className="flex-1 flex flex-col justify-center px-6 py-12">
         <div className="max-w-sm mx-auto w-full">
           <div className="flex items-center justify-center mb-8">
-            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/25">
-              <Car size={32} className="text-white" />
-            </div>
+            <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-16 w-auto" />
           </div>
 
           <h1 className="text-2xl font-bold text-center text-slate-900 mb-1">Create account</h1>

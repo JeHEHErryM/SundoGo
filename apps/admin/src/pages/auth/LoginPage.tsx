@@ -38,6 +38,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
+          <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-16 w-auto mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-slate-900">SundoGo Admin</h1>
           <p className="mt-2 text-slate-500">Sign in to manage the platform</p>
         </div>
