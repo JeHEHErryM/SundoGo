@@ -12,7 +12,7 @@
     "./tailwind": "./tailwind.config.ts"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "echo 'src-only package, no build needed'",
     "clean": "rm -rf dist",
     "lint": "eslint src/"
   },
