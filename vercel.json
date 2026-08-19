@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm --filter @sundogo/passenger build",
+  "outputDirectory": "apps/passenger/dist",
+  "devCommand": "pnpm --filter @sundogo/passenger dev",
+  "regions": ["sfo1"]
+}

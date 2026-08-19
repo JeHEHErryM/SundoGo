@@ -1,0 +1,57 @@
+export enum UserRole {
+  PASSENGER = 'PASSENGER',
+  DRIVER = 'DRIVER',
+  ADMIN = 'ADMIN',
+}
+
+export enum DriverVerificationStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+export enum DriverAvailabilityStatus {
+  OFFLINE = 'OFFLINE',
+  ONLINE = 'ONLINE',
+  ON_TRIP = 'ON_TRIP',
+}
+
+export enum BookingStatus {
+  REQUESTED = 'REQUESTED',
+  SEARCHING = 'SEARCHING',
+  ACCEPTED = 'ACCEPTED',
+  DRIVER_ARRIVING = 'DRIVER_ARRIVING',
+  DRIVER_ARRIVED = 'DRIVER_ARRIVED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum PaymentMethod {
+  CASH = 'CASH',
+  GCASH = 'GCASH',
+  OTHER = 'OTHER',
+}
+
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+  FAILED = 'FAILED',
+  REFUNDED = 'REFUNDED',
+}
+
+export enum TripStatus {
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum NotificationType {
+  BOOKING_ACCEPTED = 'BOOKING_ACCEPTED',
+  DRIVER_ARRIVING = 'DRIVER_ARRIVING',
+  DRIVER_ARRIVED = 'DRIVER_ARRIVED',
+  TRIP_STARTED = 'TRIP_STARTED',
+  TRIP_COMPLETED = 'TRIP_COMPLETED',
+  BOOKING_CANCELLED = 'BOOKING_CANCELLED',
+  EMERGENCY_ALERT = 'EMERGENCY_ALERT',
+}
