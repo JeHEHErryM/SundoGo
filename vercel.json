@@ -1,3 +1,3 @@
 {
-  "_comment": "Root vercel.json is superseded by per-app configs in apps/passenger/vercel.json, apps/driver/vercel.json, and apps/admin/vercel.json. Each frontend app is deployed as a separate Vercel project with its own configuration."
+  "_comment": "Root vercel.json is only used for CLI deploys. Each Vercel project is configured separately."
 }
