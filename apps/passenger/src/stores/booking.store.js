@@ -1,0 +1,28 @@
+import { create } from "zustand";
+export const useBookingStore = create((set) => ({
+    pickup: null,
+    destination: null,
+    currentBooking: null,
+    bookingStatus: "idle",
+    driverInfo: null,
+    fareEstimate: null,
+    tripDistance: 0,
+    tripDuration: 0,
+    setPickup: (location) => set({ pickup: location }),
+    setDestination: (location) => set({ destination: location }),
+    clearBooking: () => set({
+        pickup: null,
+        destination: null,
+        currentBooking: null,
+        bookingStatus: "idle",
+        driverInfo: null,
+        fareEstimate: null,
+        tripDistance: 0,
+        tripDuration: 0,
+    }),
+    setBookingStatus: (status) => set({ bookingStatus: status }),
+    setDriverInfo: (driver) => set({ driverInfo: driver }),
+    setFareEstimate: (fare) => set({ fareEstimate: fare }),
+    setCurrentBooking: (id) => set({ currentBooking: id }),
+    setTripInfo: (distance, duration) => set({ tripDistance: distance, tripDuration: duration }),
+}));
