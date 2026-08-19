@@ -9,6 +9,10 @@ import { DriversModule } from './drivers/drivers.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { DriverVerificationModule } from './driver-verification/driver-verification.module';
 import { AdminModule } from './admin/admin.module';
+import { TripsModule } from './trips/trips.module';
+import { PaymentsModule } from './payments/payments.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -20,6 +24,10 @@ import { AdminModule } from './admin/admin.module';
     VehiclesModule,
     DriverVerificationModule,
     AdminModule,
+    TripsModule,
+    PaymentsModule,
+    NotificationsModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
