@@ -13,6 +13,7 @@ import { TripsModule } from './trips/trips.module';
 import { PaymentsModule } from './payments/payments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { GatewayModule } from './gateway/gateway.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     PaymentsModule,
     NotificationsModule,
     ReviewsModule,
+    GatewayModule,
   ],
   controllers: [AppController],
   providers: [AppService],
