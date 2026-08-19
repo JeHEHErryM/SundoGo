@@ -8,13 +8,13 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "skipLibCheck": true,
     "paths": {
       "@/*": ["./src/*"],
       "@sundogo/types": ["../../packages/types/src"],
       "@sundogo/validation": ["../../packages/validation/src"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "../../packages/types/src", "../../packages/validation/src"],
   "exclude": ["node_modules", "dist"]
 }
