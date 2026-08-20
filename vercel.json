@@ -1,3 +1,9 @@
 {
-  "_comment": "Root vercel.json is only used for CLI deploys. Each Vercel project is configured separately."
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "buildCommand": "pnpm --filter @sundogo/landing build",
+  "outputDirectory": "dist",
+  "framework": null,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

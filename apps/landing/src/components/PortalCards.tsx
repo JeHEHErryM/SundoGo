@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Car, User, Shield } from 'lucide-react';
 
-const PASSenger_APP = import.meta.env.VITE_PASSENGER_URL || 'https://passenger-alpha.vercel.app';
+const PASSENGER_APP = import.meta.env.VITE_PASSENGER_URL || 'https://passenger-alpha.vercel.app';
 const DRIVER_APP = import.meta.env.VITE_DRIVER_URL || 'https://driver-five-teal.vercel.app';
 const ADMIN_APP = import.meta.env.VITE_ADMIN_URL || 'https://admin-lime-rho.vercel.app';
 
@@ -11,8 +11,8 @@ const roles = [
     title: 'Passenger',
     description: 'Book tricycle rides around Mamburao. Quick, affordable, and reliable.',
     cta: 'Ride as Passenger',
-    href: `${PASSenger_APP}/register`,
-    color: 'blue',
+    href: `${PASSENGER_APP}/register`,
+    color: 'primary',
   },
   {
     icon: Car,
@@ -20,7 +20,7 @@ const roles = [
     description: 'Earn money by giving rides. Set your own schedule and be your own boss.',
     cta: 'Become a Driver',
     href: `${DRIVER_APP}/register`,
-    color: 'emerald',
+    color: 'accent',
   },
   {
     icon: Shield,
@@ -34,8 +34,8 @@ const roles = [
 ];
 
 const colorMap: Record<string, { bg: string; icon: string; btn: string; hover: string }> = {
-  blue: { bg: 'bg-blue-50', icon: 'bg-blue-100 text-blue-600', btn: 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/25', hover: 'hover:border-blue-200' },
-  emerald: { bg: 'bg-emerald-50', icon: 'bg-emerald-100 text-emerald-600', btn: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/25', hover: 'hover:border-emerald-200' },
+  primary: { bg: 'bg-primary-50', icon: 'bg-primary-100 text-primary-600', btn: 'bg-primary-600 hover:bg-primary-700 shadow-primary-600/25', hover: 'hover:border-primary-200' },
+  accent: { bg: 'bg-accent-300/10', icon: 'bg-accent-400/20 text-accent-600', btn: 'bg-accent-500 hover:bg-accent-600 shadow-accent-500/25', hover: 'hover:border-accent-300' },
   slate: { bg: 'bg-slate-50', icon: 'bg-slate-200 text-slate-600', btn: 'bg-slate-700 hover:bg-slate-800 shadow-slate-700/25', hover: 'hover:border-slate-300' },
 };
 

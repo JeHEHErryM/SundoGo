@@ -15,15 +15,15 @@ export default function HowItWorks() {
           <p className="mt-3 text-slate-500">Three simple steps to your destination</p>
         </div>
 
-        <div className="grid sm:grid-cols-3 gap-8 relative">
-          <div className="hidden sm:block absolute top-12 left-[20%] right-[20%] h-0.5 bg-blue-200" />
+        <div className="grid sm:grid-cols-3 gap-10 relative">
+          <div className="hidden sm:block absolute top-12 left-[16.67%] right-[16.67%] h-0.5 bg-primary-200" />
 
           {steps.map((step) => (
             <div key={step.number} className="relative text-center">
               <div className="w-24 h-24 mx-auto mb-5 bg-white rounded-full shadow-md border border-slate-100 flex items-center justify-center relative z-10">
-                <step.icon size={32} className="text-blue-600" />
+                <step.icon size={32} className="text-primary-600" />
               </div>
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 w-7 h-7 bg-blue-600 text-white text-xs font-bold rounded-full flex items-center justify-center z-20">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 w-7 h-7 bg-primary-600 text-white text-xs font-bold rounded-full flex items-center justify-center z-20">
                 {step.number}
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">{step.title}</h3>

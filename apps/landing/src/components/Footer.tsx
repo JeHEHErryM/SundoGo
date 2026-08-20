@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="grid sm:grid-cols-3 gap-8">
           <div>
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-7 w-auto brightness-0 invert" />
+              <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-7 w-auto" />
               <span className="text-lg font-bold text-white">SundoGo</span>
             </Link>
             <p className="text-sm leading-relaxed">
