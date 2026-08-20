@@ -11,13 +11,12 @@ export default function Hero() {
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
         <div className="max-w-2xl">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 leading-tight">
-            Your Tricycle,{' '}
-            <span className="text-primary-600">One Tap Away</span>
+            Hatid. Sundo.{' '}
+            <span className="text-primary-600">Anytime.</span>
           </h1>
 
           <p className="mt-5 text-lg text-slate-600 leading-relaxed max-w-lg">
-            Book affordable tricycle rides in Mamburao, Occidental Mindoro.
-            Quick, safe, and reliable — the easiest way to get around town.
+            Book tricycle rides around your town.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
@@ -39,11 +38,11 @@ export default function Hero() {
           <div className="mt-10 flex items-center gap-6 text-sm text-slate-500">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-primary-500 rounded-full" />
-              Free to download
+              PWA Quick Install
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-primary-500 rounded-full" />
-              Cash & digital payments
+              Cash payments and digital (soon)
             </div>
           </div>
         </div>
@@ -56,9 +55,9 @@ export default function Hero() {
                   <div className="w-16 h-5 bg-black rounded-full" />
                 </div>
 
-                <img src="/SundoGo_Logo.svg" alt="SundoGo" className="w-32 h-32 mb-4" />
+                <img src="/SundoGo_Logo.svg" alt="SundoGo" className="w-36 h-36 mb-4" />
                 <p className="text-xl font-bold text-slate-900">SundoGo</p>
-                <p className="text-sm text-slate-400 mt-1">Mamburao, Occidental Mindoro</p>
+                <p className="text-sm text-slate-400 mt-1">Hatid. Sundo. Anytime.</p>
 
                 <div className="absolute bottom-6 inset-x-6">
                   <Link

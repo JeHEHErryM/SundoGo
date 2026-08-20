@@ -3,7 +3,7 @@ import { MapPin, Route, CreditCard } from 'lucide-react';
 const steps = [
   { icon: MapPin, number: '1', title: 'Book', description: 'Enter your pickup location and destination on the map.' },
   { icon: Route, number: '2', title: 'Ride', description: 'A verified driver picks you up and takes you to your destination.' },
-  { icon: CreditCard, number: '3', title: 'Pay', description: 'Pay with cash or digital payment. Simple and transparent.' },
+  { icon: CreditCard, number: '3', title: 'Pay', description: 'Pay with cash or digital payment (soon). Simple and transparent.' },
 ];
 
 export default function HowItWorks() {

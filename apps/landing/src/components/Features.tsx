@@ -24,7 +24,7 @@ export default function Features() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="text-center max-w-lg mx-auto mb-14">
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">Why SundoGo?</h2>
-          <p className="mt-3 text-slate-500">The smarter way to ride around Mamburao</p>
+          <p className="mt-3 text-slate-500">The smarter way to ride</p>
         </div>
 
         <div className="grid sm:grid-cols-3 gap-8">

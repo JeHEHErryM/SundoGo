@@ -7,11 +7,11 @@ export default function Footer() {
         <div className="grid sm:grid-cols-3 gap-8">
           <div>
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-7 w-auto" />
+              <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-9 w-auto" />
               <span className="text-lg font-bold text-white">SundoGo</span>
             </Link>
             <p className="text-sm leading-relaxed">
-              Your trusted tricycle ride-booking platform in Mamburao, Occidental Mindoro.
+              Your trusted tricycle ride-booking platform.
             </p>
           </div>
 
@@ -30,7 +30,7 @@ export default function Footer() {
               <li>Mamburao, Occidental Mindoro</li>
               <li>Philippines</li>
               <li className="pt-2">
-                <a href="mailto:hello@sundogo.ph" className="hover:text-white transition-colors">hello@sundogo.ph</a>
+                <a href="mailto:hello@sundogo.ph" className="hover:text-white transition-colors">hello@sundogo.ph (inactive)</a>
               </li>
             </ul>
           </div>

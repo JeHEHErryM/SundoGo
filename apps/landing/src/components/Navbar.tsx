@@ -16,7 +16,7 @@ export default function Navbar() {
     <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-200 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm' : 'bg-transparent'}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-8 w-auto" />
+          <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-10 w-auto" />
           <span className="text-lg font-bold text-slate-900">SundoGo</span>
         </Link>
 
@@ -60,7 +60,7 @@ export default function Navbar() {
           <Link
             to="/portal"
             onClick={() => setMobileOpen(false)}
-            className="block h-10 px-4 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg text-center transition-colors"
+            className="flex items-center justify-center h-10 px-4 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg transition-colors"
           >
             Sign Up
           </Link>
