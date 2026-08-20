@@ -33,7 +33,7 @@ export default function TripHistoryPage() {
         {["All", "Completed", "Cancelled"].map((filter) => (
           <button
             key={filter}
-            className="px-4 py-1.5 text-sm font-medium rounded-full whitespace-nowrap bg-blue-600 text-white"
+            className="px-4 py-1.5 text-sm font-medium rounded-full whitespace-nowrap bg-primary-600 text-white"
           >
             {filter}
           </button>
@@ -63,7 +63,7 @@ export default function TripHistoryPage() {
 
             <div className="flex items-start gap-2.5">
               <div className="flex flex-col items-center gap-0.5 mt-0.5">
-                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                <div className="w-2 h-2 rounded-full bg-primary-500" />
                 <div className="w-0.5 h-4 bg-slate-200" />
                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
               </div>

@@ -23,7 +23,7 @@ export default function ProfilePage() {
     {
       title: "Account",
       items: [
-        { icon: Shield, label: "Safety & Security", desc: "Manage safety features", color: "text-blue-600 bg-blue-50" },
+        { icon: Shield, label: "Safety & Security", desc: "Manage safety features", color: "text-primary-600 bg-primary-50" },
         { icon: Bell, label: "Notifications", desc: "Alert preferences", color: "text-amber-600 bg-amber-50", action: () => navigate("/notifications") },
         { icon: CreditCard, label: "Payment Methods", desc: "Manage payment options", color: "text-green-600 bg-green-50" },
         { icon: MapPin, label: "Saved Places", desc: "Home, work, favorites", color: "text-purple-600 bg-purple-50" },
@@ -44,10 +44,10 @@ export default function ProfilePage() {
       <div className="bg-white px-5 pt-6 pb-5 border-b border-slate-100">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-xl font-bold text-blue-600">
+            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center text-xl font-bold text-primary-600">
               {name.charAt(0)}
             </div>
-            <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center border-2 border-white">
+            <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-primary-600 rounded-full flex items-center justify-center border-2 border-white">
               <Camera size={12} className="text-white" />
             </button>
           </div>
@@ -76,7 +76,7 @@ export default function ProfilePage() {
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full h-10 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-blue-500 focus:bg-white"
+                  className="w-full h-10 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary-500 focus:bg-white"
                 />
               </div>
             </div>
@@ -87,7 +87,7 @@ export default function ProfilePage() {
                 <input
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-10 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-blue-500 focus:bg-white"
+                  className="w-full h-10 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary-500 focus:bg-white"
                 />
               </div>
             </div>
@@ -98,13 +98,13 @@ export default function ProfilePage() {
                 <input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full h-10 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-blue-500 focus:bg-white"
+                  className="w-full h-10 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary-500 focus:bg-white"
                 />
               </div>
             </div>
             <button
               onClick={() => setEditing(false)}
-              className="w-full h-10 bg-blue-600 text-white font-medium rounded-lg text-sm hover:bg-blue-700 transition-colors"
+              className="w-full h-10 bg-primary-600 text-white font-medium rounded-lg text-sm hover:bg-primary-700 transition-colors"
             >
               Save Changes
             </button>

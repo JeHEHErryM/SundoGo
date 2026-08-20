@@ -36,7 +36,7 @@ export default function TripCompletedPage() {
         <div className="bg-white rounded-2xl p-4 border border-slate-100">
           <div className="flex items-start gap-3">
             <div className="flex flex-col items-center gap-0.5 mt-0.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />
+              <div className="w-2.5 h-2.5 rounded-full bg-primary-600" />
               <div className="w-0.5 h-6 bg-slate-200" />
               <div className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
             </div>
@@ -56,7 +56,7 @@ export default function TripCompletedPage() {
         {/* Fare card */}
         <div className="bg-white rounded-2xl p-4 border border-slate-100">
           <div className="flex items-center gap-2 mb-3">
-            <Receipt size={16} className="text-blue-600" />
+            <Receipt size={16} className="text-primary-600" />
             <h3 className="text-sm font-semibold text-slate-900">Trip Fare</h3>
           </div>
           <div className="text-center py-2">
@@ -69,7 +69,7 @@ export default function TripCompletedPage() {
         {driverInfo && (
           <div className="bg-white rounded-2xl p-4 border border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-sm font-bold text-blue-600">
+              <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-sm font-bold text-primary-600">
                 {driverInfo.name.charAt(0)}
               </div>
               <div className="flex-1">
@@ -88,7 +88,7 @@ export default function TripCompletedPage() {
       <div className="px-5 pb-8 space-y-2.5">
         <button
           onClick={handlePay}
-          className="w-full h-12 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-600/25"
+          className="w-full h-12 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25"
         >
           Confirm Cash Payment
           <ChevronRight size={18} />

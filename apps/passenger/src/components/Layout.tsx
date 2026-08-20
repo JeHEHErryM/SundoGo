@@ -41,7 +41,7 @@ export default function Layout() {
                   key={to}
                   to={to}
                   className={`flex flex-col items-center gap-0.5 min-w-[64px] py-1 rounded-xl transition-colors ${
-                    isActive ? "text-blue-600" : "text-slate-400 hover:text-slate-600"
+                    isActive ? "text-primary-600" : "text-slate-400 hover:text-slate-600"
                   }`}
                 >
                   <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />

@@ -39,7 +39,7 @@ export default function HomePage() {
           onClick={() => navigate("/booking")}
           className="w-full flex items-center gap-3 h-14 px-4 bg-white rounded-2xl shadow-lg shadow-slate-200/60 border border-slate-100 hover:shadow-xl transition-shadow text-left"
         >
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center shrink-0">
             <Search size={18} className="text-white" />
           </div>
           <div>
@@ -68,7 +68,7 @@ export default function HomePage() {
               <Clock size={16} className="text-slate-400" />
               <h3 className="text-sm font-semibold text-slate-900">Recent Destinations</h3>
             </div>
-            <button className="text-xs text-blue-600 font-medium">See all</button>
+            <button className="text-xs text-primary-600 font-medium">See all</button>
           </div>
           {recentDestinations.map((dest, i) => (
             <button
@@ -89,18 +89,18 @@ export default function HomePage() {
         </div>
 
         {/* Safety info */}
-        <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-2xl">
-          <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
-            <Shield size={18} className="text-blue-600" />
+        <div className="flex items-center gap-3 p-4 bg-primary-50 rounded-2xl">
+          <div className="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center shrink-0">
+            <Shield size={18} className="text-primary-600" />
           </div>
           <div>
-            <p className="text-sm font-medium text-blue-900">Your safety matters</p>
-            <p className="text-xs text-blue-600/70">All trips are tracked and drivers are verified</p>
+            <p className="text-sm font-medium text-primary-900">Your safety matters</p>
+            <p className="text-xs text-primary-600/70">All trips are tracked and drivers are verified</p>
           </div>
         </div>
 
         {/* Promo banner */}
-        <div className="bg-gradient-to-r from-blue-600 to-cyan-500 p-4 rounded-2xl text-white mb-4">
+        <div className="bg-gradient-to-r from-primary-600 to-cyan-500 p-4 rounded-2xl text-white mb-4">
           <div className="flex items-center gap-2 mb-1">
             <Star size={16} className="text-yellow-300" fill="currentColor" />
             <span className="text-sm font-bold">50% OFF</span>

@@ -55,7 +55,7 @@ export default function FareEstimatePage() {
         <div className="bg-slate-50 rounded-2xl p-4">
           <div className="flex items-start gap-3">
             <div className="flex flex-col items-center gap-0.5 mt-0.5">
-              <div className="w-3 h-3 rounded-full bg-blue-600" />
+              <div className="w-3 h-3 rounded-full bg-primary-600" />
               <div className="w-0.5 h-8 bg-slate-300" />
               <div className="w-3 h-3 rounded-full bg-emerald-600" />
             </div>
@@ -75,8 +75,8 @@ export default function FareEstimatePage() {
         {/* Trip info */}
         <div className="grid grid-cols-2 gap-3">
           <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl">
-            <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Route size={16} className="text-blue-600" />
+            <div className="w-9 h-9 bg-primary-100 rounded-lg flex items-center justify-center">
+              <Route size={16} className="text-primary-600" />
             </div>
             <div>
               <p className="text-lg font-bold text-slate-900">{useBookingStore.getState().tripDistance} km</p>
@@ -98,7 +98,7 @@ export default function FareEstimatePage() {
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
           <div className="px-4 pt-4 pb-2">
             <div className="flex items-center gap-2">
-              <DollarSign size={16} className="text-blue-600" />
+              <DollarSign size={16} className="text-primary-600" />
               <h3 className="text-sm font-semibold text-slate-900">Fare Breakdown</h3>
             </div>
           </div>
@@ -117,13 +117,13 @@ export default function FareEstimatePage() {
             </div>
             <div className="border-t border-slate-100 pt-2.5 flex justify-between">
               <span className="text-sm font-bold text-slate-900">Total</span>
-              <span className="text-xl font-bold text-blue-600">₱{fareEstimate.total.toFixed(2)}</span>
+              <span className="text-xl font-bold text-primary-600">₱{fareEstimate.total.toFixed(2)}</span>
             </div>
           </div>
         </div>
 
         {/* Vehicle type */}
-        <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-2xl">
+        <div className="flex items-center gap-3 p-4 bg-primary-50 rounded-2xl">
           <span className="text-3xl">🛺</span>
           <div>
             <p className="text-sm font-bold text-slate-900">Tricycle</p>
@@ -136,7 +136,7 @@ export default function FareEstimatePage() {
       <div className="px-5 pb-8 pt-4 border-t border-slate-100 bg-white">
         <button
           onClick={handleConfirm}
-          className="w-full h-13 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-600/25 text-[15px]"
+          className="w-full h-13 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25 text-[15px]"
         >
           Confirm Booking — ₱{fareEstimate.total.toFixed(2)}
         </button>

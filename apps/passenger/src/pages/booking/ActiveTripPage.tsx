@@ -45,7 +45,7 @@ export default function ActiveTripPage() {
         <div>
           <div className="flex justify-between text-xs text-slate-500 mb-1.5">
             <span className="flex items-center gap-1">
-              <Navigation size={12} className="text-blue-600" /> {pickup?.address?.slice(0, 20) || "Pickup"}
+              <Navigation size={12} className="text-primary-600" /> {pickup?.address?.slice(0, 20) || "Pickup"}
             </span>
             <span className="flex items-center gap-1">
               {destination?.address?.slice(0, 20) || "Dest"} <Navigation size={12} className="text-emerald-600" />
@@ -53,7 +53,7 @@ export default function ActiveTripPage() {
           </div>
           <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all duration-1000"
+              className="h-full bg-gradient-to-r from-primary-500 to-emerald-500 rounded-full transition-all duration-1000"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -61,15 +61,15 @@ export default function ActiveTripPage() {
         </div>
 
         {/* Status */}
-        <div className="flex items-center gap-2 bg-blue-50 px-4 py-2.5 rounded-xl">
-          <div className="w-2.5 h-2.5 bg-blue-600 rounded-full animate-pulse" />
-          <span className="text-sm font-semibold text-blue-900">Trip in progress</span>
+        <div className="flex items-center gap-2 bg-primary-50 px-4 py-2.5 rounded-xl">
+          <div className="w-2.5 h-2.5 bg-primary-600 rounded-full animate-pulse" />
+          <span className="text-sm font-semibold text-primary-900">Trip in progress</span>
         </div>
 
         {/* Driver card */}
         <div className="bg-white border border-slate-200 rounded-2xl p-4">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-blue-100 rounded-full flex items-center justify-center text-lg font-bold text-blue-600">
+            <div className="w-11 h-11 bg-primary-100 rounded-full flex items-center justify-center text-lg font-bold text-primary-600">
               {driverInfo.name.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
@@ -79,7 +79,7 @@ export default function ActiveTripPage() {
             <div className="flex gap-2">
               <a
                 href={`tel:${driverInfo.phone}`}
-                className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white"
+                className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white"
               >
                 <Phone size={16} />
               </a>

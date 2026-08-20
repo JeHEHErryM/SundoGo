@@ -50,12 +50,12 @@ export default function Map({ pickup, destination, driverLocation, className = "
       {pickup && (
         <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-full animate-bounce">
           <div className="flex flex-col items-center">
-            <div className="bg-blue-600 text-white px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap shadow-lg mb-1">
+            <div className="bg-primary-600 text-white px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap shadow-lg mb-1">
               Pickup
             </div>
             <div className="relative">
-              <MapPin size={36} className="text-blue-600 drop-shadow-md" fill="#2563eb" />
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-1 bg-blue-600/30 rounded-full blur-sm" />
+              <MapPin size={36} className="text-primary-600 drop-shadow-md" fill="#16a34a" />
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-1 bg-primary-600/30 rounded-full blur-sm" />
             </div>
           </div>
         </div>
@@ -80,10 +80,10 @@ export default function Map({ pickup, destination, driverLocation, className = "
       {driverLocation && (
         <div className="absolute top-[45%] left-[40%] -translate-x-1/2 -translate-y-1/2">
           <div className="relative">
-            <div className="w-10 h-10 bg-blue-500 rounded-full border-3 border-white shadow-lg flex items-center justify-center animate-pulse">
+            <div className="w-10 h-10 bg-primary-500 rounded-full border-3 border-white shadow-lg flex items-center justify-center animate-pulse">
               <Car size={20} className="text-white" />
             </div>
-            <div className="absolute -inset-2 bg-blue-400/20 rounded-full animate-ping" />
+            <div className="absolute -inset-2 bg-primary-400/20 rounded-full animate-ping" />
           </div>
         </div>
       )}
@@ -91,8 +91,8 @@ export default function Map({ pickup, destination, driverLocation, className = "
       {/* Center indicator when no pins */}
       {!pickup && !destination && !driverLocation && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-6 h-6 border-2 border-blue-600/50 rounded-full flex items-center justify-center">
-            <div className="w-2 h-2 bg-blue-600 rounded-full" />
+          <div className="w-6 h-6 border-2 border-primary-600/50 rounded-full flex items-center justify-center">
+            <div className="w-2 h-2 bg-primary-600 rounded-full" />
           </div>
         </div>
       )}

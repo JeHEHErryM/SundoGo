@@ -22,7 +22,7 @@ export default function NotificationsPage() {
   const navigate = useNavigate();
 
   const typeColors: Record<string, string> = {
-    booking: "bg-blue-100 text-blue-600",
+    booking: "bg-primary-100 text-primary-600",
     promo: "bg-amber-100 text-amber-600",
     system: "bg-slate-100 text-slate-600",
   };
@@ -37,7 +37,7 @@ export default function NotificationsPage() {
         <div className="flex-1">
           <h1 className="text-lg font-bold text-slate-900">Notifications</h1>
         </div>
-        <button className="text-xs text-blue-600 font-medium">Mark all read</button>
+        <button className="text-xs text-primary-600 font-medium">Mark all read</button>
       </div>
 
       {/* Notification list */}
@@ -46,7 +46,7 @@ export default function NotificationsPage() {
           <div
             key={notif.id}
             className={`bg-white rounded-2xl p-4 border border-slate-100 ${
-              !notif.read ? "ring-1 ring-blue-100" : ""
+              !notif.read ? "ring-1 ring-primary-100" : ""
             }`}
           >
             <div className="flex items-start gap-3">
@@ -56,7 +56,7 @@ export default function NotificationsPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <p className="text-sm font-semibold text-slate-900">{notif.title}</p>
-                  {!notif.read && <div className="w-2 h-2 bg-blue-500 rounded-full shrink-0" />}
+                  {!notif.read && <div className="w-2 h-2 bg-primary-500 rounded-full shrink-0" />}
                 </div>
                 <p className="text-xs text-slate-500 leading-relaxed">{notif.body}</p>
                 <p className="text-[11px] text-slate-400 mt-1.5">{notif.time}</p>

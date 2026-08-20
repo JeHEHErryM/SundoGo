@@ -36,16 +36,16 @@ export default function DriverAcceptedPage() {
       {/* Driver info panel */}
       <div className="flex-1 px-5 pt-5 pb-8 space-y-4">
         {/* Status badge */}
-        <div className="flex items-center gap-2 bg-blue-50 px-4 py-2.5 rounded-xl">
-          <div className="w-2.5 h-2.5 bg-blue-600 rounded-full animate-pulse" />
-          <span className="text-sm font-semibold text-blue-900">Driver is on the way</span>
-          <span className="ml-auto text-sm font-bold text-blue-600">{eta} min</span>
+        <div className="flex items-center gap-2 bg-primary-50 px-4 py-2.5 rounded-xl">
+          <div className="w-2.5 h-2.5 bg-primary-600 rounded-full animate-pulse" />
+          <span className="text-sm font-semibold text-primary-900">Driver is on the way</span>
+          <span className="ml-auto text-sm font-bold text-primary-600">{eta} min</span>
         </div>
 
         {/* Driver card */}
         <div className="bg-white border border-slate-200 rounded-2xl p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-xl font-bold text-blue-600">
+            <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center text-xl font-bold text-primary-600">
               {driverInfo.name.charAt(0)}
             </div>
             <div className="flex-1">
@@ -58,7 +58,7 @@ export default function DriverAcceptedPage() {
             <div className="flex gap-2">
               <a
                 href={`tel:${driverInfo.phone}`}
-                className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700"
+                className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white hover:bg-primary-700"
               >
                 <Phone size={16} />
               </a>
@@ -84,7 +84,7 @@ export default function DriverAcceptedPage() {
 
         {/* Pickup info */}
         <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl">
-          <Navigation size={16} className="text-blue-600 shrink-0" />
+          <Navigation size={16} className="text-primary-600 shrink-0" />
           <div className="min-w-0">
             <p className="text-[11px] text-slate-400 uppercase">Pickup Point</p>
             <p className="text-sm font-medium text-slate-900 truncate">{pickup?.address || "Current Location"}</p>

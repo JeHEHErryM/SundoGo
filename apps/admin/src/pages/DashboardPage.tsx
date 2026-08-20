@@ -31,7 +31,7 @@ const recentActivity = [
 
 const quickActions = [
   { label: "Review Verifications", path: "/drivers/verification", color: "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" },
-  { label: "View Bookings", path: "/bookings", color: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100" },
+  { label: "View Bookings", path: "/bookings", color: "bg-primary-50 text-primary-700 border-primary-200 hover:bg-primary-100" },
   { label: "Manage Fares", path: "/pricing", color: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" },
   { label: "View Reports", path: "/reports", color: "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100" },
 ];
@@ -64,7 +64,7 @@ export default function DashboardPage() {
                       ? "bg-emerald-500"
                       : item.type === "warning"
                       ? "bg-amber-500"
-                      : "bg-blue-500"
+                      : "bg-primary-500"
                   }`}
                 />
                 <div className="flex-1 min-w-0">

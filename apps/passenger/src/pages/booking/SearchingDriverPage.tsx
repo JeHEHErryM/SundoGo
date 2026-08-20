@@ -46,7 +46,7 @@ export default function SearchingDriverPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-blue-600 to-blue-700 flex flex-col items-center justify-center px-6 text-white">
+    <div className="min-h-dvh bg-gradient-to-b from-primary-600 to-primary-700 flex flex-col items-center justify-center px-6 text-white">
       {/* Cancel button */}
       <button
         onClick={handleCancel}
@@ -64,7 +64,7 @@ export default function SearchingDriverPage() {
       </div>
 
       <h2 className="text-2xl font-bold mb-2">Looking for a driver{dots}</h2>
-      <p className="text-blue-100 text-sm mb-8">This usually takes less than a minute</p>
+      <p className="text-primary-100 text-sm mb-8">This usually takes less than a minute</p>
 
       {/* Progress indicator */}
       <div className="w-full max-w-xs">
@@ -74,7 +74,7 @@ export default function SearchingDriverPage() {
             style={{ width: `${Math.min((elapsed / 10) * 100, 95)}%` }}
           />
         </div>
-        <p className="text-center text-xs text-blue-200 mt-2">Searching nearby drivers...</p>
+        <p className="text-center text-xs text-primary-200 mt-2">Searching nearby drivers...</p>
       </div>
     </div>
   );

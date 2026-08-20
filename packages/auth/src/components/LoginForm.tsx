@@ -41,7 +41,7 @@ export function LoginForm({ onSubmit, registerPath = '/register', isLoading, err
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full h-12 pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:bg-white focus:border-blue-500 transition-colors"
+              className="w-full h-12 pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:bg-white focus:border-primary-500 transition-colors"
             />
           </div>
         </div>
@@ -56,7 +56,7 @@ export function LoginForm({ onSubmit, registerPath = '/register', isLoading, err
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              className="w-full h-12 pl-11 pr-12 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:bg-white focus:border-blue-500 transition-colors"
+              className="w-full h-12 pl-11 pr-12 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:bg-white focus:border-primary-500 transition-colors"
             />
             <button
               type="button"
@@ -71,7 +71,7 @@ export function LoginForm({ onSubmit, registerPath = '/register', isLoading, err
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full h-12 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-600/25"
+          className="w-full h-12 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 disabled:opacity-50 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25"
         >
           {isLoading ? (
             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -86,7 +86,7 @@ export function LoginForm({ onSubmit, registerPath = '/register', isLoading, err
 
       <p className="mt-6 text-center text-sm text-slate-500">
         Don't have an account?{' '}
-        <Link to={registerPath} className="text-blue-600 font-semibold hover:text-blue-700">
+        <Link to={registerPath} className="text-primary-600 font-semibold hover:text-primary-700">
           Create one
         </Link>
       </p>

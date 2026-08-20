@@ -63,7 +63,7 @@ export default function MapBookingPage() {
         {/* Center pin indicator */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
           <div className="flex flex-col items-center">
-            <MapPin size={32} className={tab === "pickup" ? "text-blue-600" : "text-emerald-600"} fill={tab === "pickup" ? "#2563eb" : "#059669"} />
+            <MapPin size={32} className={tab === "pickup" ? "text-primary-600" : "text-emerald-600"} fill={tab === "pickup" ? "#2563eb" : "#059669"} />
             <div className="w-3 h-1 bg-black/10 rounded-full blur-sm mt-0.5" />
           </div>
         </div>
@@ -74,7 +74,7 @@ export default function MapBookingPage() {
         {/* Route dots */}
         <div className="flex items-center gap-3">
           <div className="flex flex-col items-center gap-0.5">
-            <div className="w-3 h-3 rounded-full bg-blue-600 border-2 border-blue-200" />
+            <div className="w-3 h-3 rounded-full bg-primary-600 border-2 border-primary-200" />
             <div className="w-0.5 h-5 bg-slate-200" />
             <div className="w-3 h-3 rounded-full bg-emerald-600 border-2 border-emerald-200" />
           </div>
@@ -84,7 +84,7 @@ export default function MapBookingPage() {
             <button
               onClick={() => setTab("pickup")}
               className={`w-full flex items-center gap-3 h-11 px-3 rounded-xl border transition-colors ${
-                tab === "pickup" ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-slate-50"
+                tab === "pickup" ? "border-primary-500 bg-primary-50" : "border-slate-200 bg-slate-50"
               }`}
             >
               {pickup ? (
@@ -133,7 +133,7 @@ export default function MapBookingPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={tab === "pickup" ? "Search pickup location" : "Search destination"}
-              className="w-full h-11 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:bg-white focus:border-blue-500 transition-colors"
+              className="w-full h-11 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:bg-white focus:border-primary-500 transition-colors"
               autoFocus
             />
           </div>
@@ -159,7 +159,7 @@ export default function MapBookingPage() {
         <button
           onClick={handleConfirm}
           disabled={!pickup || !destination}
-          className="w-full h-13 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-600/25 text-[15px]"
+          className="w-full h-13 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25 text-[15px]"
         >
           <Navigation size={18} />
           Get Fare Estimate

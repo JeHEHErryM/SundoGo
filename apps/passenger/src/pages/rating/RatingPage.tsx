@@ -32,7 +32,7 @@ export default function RatingPage() {
         <p className="text-slate-500 text-sm mb-8">Your rating helps us improve the service.</p>
         <button
           onClick={handleDone}
-          className="w-full max-w-xs h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl transition-colors"
+          className="w-full max-w-xs h-12 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-2xl transition-colors"
         >
           Back to Home
         </button>
@@ -53,7 +53,7 @@ export default function RatingPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 space-y-8">
         {/* Driver */}
         <div className="text-center">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-xl font-bold text-blue-600 mx-auto mb-3">
+          <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center text-xl font-bold text-primary-600 mx-auto mb-3">
             {(driverInfo?.name || "D").charAt(0)}
           </div>
           <p className="font-bold text-slate-900">{driverInfo?.name || "Your Driver"}</p>
@@ -94,7 +94,7 @@ export default function RatingPage() {
             onChange={(e) => setComment(e.target.value)}
             placeholder="Leave a comment (optional)"
             rows={3}
-            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:bg-white focus:border-blue-500 transition-colors resize-none"
+            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:bg-white focus:border-primary-500 transition-colors resize-none"
           />
         </div>
       </div>
@@ -103,7 +103,7 @@ export default function RatingPage() {
         <button
           onClick={handleSubmit}
           disabled={rating === 0}
-          className="w-full h-13 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-600/25"
+          className="w-full h-13 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25"
         >
           <Send size={18} />
           Submit Rating

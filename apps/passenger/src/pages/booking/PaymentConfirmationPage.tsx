@@ -32,7 +32,7 @@ export default function PaymentConfirmationPage() {
 
         <button
           onClick={handleDone}
-          className="w-full max-w-xs h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors"
+          className="w-full max-w-xs h-12 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors"
         >
           <Home size={18} />
           Back to Home
@@ -62,7 +62,7 @@ export default function PaymentConfirmationPage() {
         {/* Driver */}
         {driverInfo && (
           <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-xl">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-sm font-bold text-blue-600">
+            <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-sm font-bold text-primary-600">
               {driverInfo.name.charAt(0)}
             </div>
             <div>
@@ -94,7 +94,7 @@ export default function PaymentConfirmationPage() {
       <div className="px-6 pb-8">
         <button
           onClick={handleConfirm}
-          className="w-full h-13 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-600/25 text-[15px]"
+          className="w-full h-13 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25 text-[15px]"
         >
           I Have Paid Cash
           <ArrowRight size={18} />
