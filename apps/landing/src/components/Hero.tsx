@@ -61,9 +61,12 @@ export default function Hero() {
                 <p className="text-sm text-slate-400 mt-1">Mamburao, Occidental Mindoro</p>
 
                 <div className="absolute bottom-6 inset-x-6">
-                  <div className="w-full h-11 bg-primary-600 rounded-xl flex items-center justify-center">
+                  <Link
+                    to="/login"
+                    className="w-full h-11 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 rounded-xl flex items-center justify-center transition-colors cursor-pointer"
+                  >
                     <span className="text-white text-sm font-semibold">Book a Ride</span>
-                  </div>
+                  </Link>
                 </div>
               </div>
             </div>
