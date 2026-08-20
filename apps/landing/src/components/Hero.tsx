@@ -16,6 +16,11 @@ export default function Hero() {
           </h1>
 
           <p className="mt-5 text-lg text-slate-600 leading-relaxed max-w-lg">
+            Book affordable tricycle rides in Mamburao, Occidental Mindoro.
+            Quick, safe, and reliable — the easiest way to get around town.
+          </p>
+
+          <p className="mt-3 text-base text-slate-500 leading-relaxed max-w-lg">
             Book tricycle rides around your town.
           </p>
 
@@ -47,22 +52,24 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2">
+        <div className="hidden lg:block absolute right-4 xl:right-10 top-1/2 -translate-y-1/2">
           <div className="relative animate-[float_6s_ease-in-out_infinite]">
-            <div className="w-[280px] h-[560px] bg-slate-900 rounded-[3rem] shadow-2xl p-3">
-              <div className="w-full h-full bg-white rounded-[2.25rem] overflow-hidden flex flex-col items-center justify-center relative">
-                <div className="absolute top-0 inset-x-0 h-7 bg-slate-900 rounded-b-2xl flex items-center justify-center">
-                  <div className="w-16 h-5 bg-black rounded-full" />
+            <div className="w-[260px] h-[520px] bg-slate-900 rounded-[2.5rem] shadow-2xl p-[10px]">
+              <div className="w-full h-full bg-white rounded-[2rem] overflow-hidden flex flex-col items-center relative">
+                <div className="absolute top-0 inset-x-0 h-7 bg-slate-900 rounded-b-2xl flex items-center justify-center z-10">
+                  <div className="w-14 h-4 bg-black rounded-full" />
                 </div>
 
-                <img src="/SundoGo_Logo.svg" alt="SundoGo" className="w-36 h-36 mb-4" />
-                <p className="text-xl font-bold text-slate-900">SundoGo</p>
-                <p className="text-sm text-slate-400 mt-1">Hatid. Sundo. Anytime.</p>
+                <div className="flex-1 flex flex-col items-center justify-center px-6 pt-8 pb-20">
+                  <img src="/SundoGo_Logo.svg" alt="SundoGo" className="w-32 h-32 mb-3" />
+                  <p className="text-lg font-bold text-slate-900">SundoGo</p>
+                  <p className="text-xs text-slate-400 mt-1">Hatid. Sundo. Anytime.</p>
+                </div>
 
-                <div className="absolute bottom-6 inset-x-6">
+                <div className="absolute bottom-5 inset-x-5">
                   <Link
                     to="/login"
-                    className="w-full h-11 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 rounded-xl flex items-center justify-center transition-colors cursor-pointer"
+                    className="w-full h-10 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 rounded-xl flex items-center justify-center transition-colors cursor-pointer"
                   >
                     <span className="text-white text-sm font-semibold">Book a Ride</span>
                   </Link>
