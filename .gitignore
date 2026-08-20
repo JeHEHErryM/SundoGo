@@ -62,3 +62,6 @@ prisma/migrations/**/migration_lock.toml
 # Misc
 *.pem
 *.key
+
+.vercel
+.env*
