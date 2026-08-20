@@ -13,6 +13,7 @@
   "dependencies": {
     "@sundogo/config": "workspace:*",
     "@sundogo/types": "workspace:*",
+    "@sundogo/auth": "workspace:*",
     "@sundogo/ui": "workspace:*",
     "@sundogo/validation": "workspace:*",
     "@tanstack/react-query": "^5.62.0",

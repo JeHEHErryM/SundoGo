@@ -22,6 +22,7 @@
       "@sundogo/types": ["../../packages/types/src"],
       "@sundogo/ui": ["../../packages/ui/src"],
       "@sundogo/validation": ["../../packages/validation/src"],
+      "@sundogo/auth": ["../../packages/auth/src"],
       "@sundogo/config": ["../../packages/config/src"]
     }
   },

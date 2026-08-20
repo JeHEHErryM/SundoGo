@@ -32,6 +32,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@sundogo/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@sundogo/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -90,6 +93,9 @@ importers:
 
   apps/driver:
     dependencies:
+      '@sundogo/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@sundogo/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -149,8 +155,48 @@ importers:
         specifier: ^6.0.0
         version: 6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.50.0)
 
+  apps/landing:
+    dependencies:
+      lucide-react:
+        specifier: ^0.468.0
+        version: 0.468.0(react@19.2.8)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.8
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.8(react@19.2.8)
+      react-router-dom:
+        specifier: ^7.1.0
+        version: 7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+    devDependencies:
+      '@tailwindcss/vite':
+        specifier: ^4.0.0
+        version: 4.3.3(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.50.0))
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.18
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.4(@types/react@19.2.18)
+      '@vitejs/plugin-react':
+        specifier: ^4.3.4
+        version: 4.7.0(supports-color@8.1.1)(vite@6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.50.0))
+      tailwindcss:
+        specifier: ^4.0.0
+        version: 4.3.3
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.50.0)
+
   apps/passenger:
     dependencies:
+      '@sundogo/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@sundogo/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -209,6 +255,31 @@ importers:
       vite:
         specifier: ^6.0.0
         version: 6.4.3(@types/node@22.20.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.50.0)
+
+  packages/auth:
+    dependencies:
+      '@sundogo/types':
+        specifier: workspace:*
+        version: link:../types
+      '@sundogo/validation':
+        specifier: workspace:*
+        version: link:../validation
+      lucide-react:
+        specifier: ^0.468.0
+        version: 0.468.0(react@19.2.8)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.8
+      react-router-dom:
+        specifier: ^7.1.0
+        version: 7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.18
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
 
   packages/config:
     devDependencies:

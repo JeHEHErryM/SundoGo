@@ -1,0 +1,28 @@
+{
+  "name": "@sundogo/auth",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "echo 'src-only package'",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@sundogo/types": "workspace:*",
+    "@sundogo/validation": "workspace:*",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-router-dom": "^7.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "^5.7.0"
+  }
+}

@@ -11,6 +11,7 @@
     "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
+    "@sundogo/auth": "workspace:*",
     "@sundogo/config": "workspace:*",
     "@sundogo/types": "workspace:*",
     "@sundogo/ui": "workspace:*",
