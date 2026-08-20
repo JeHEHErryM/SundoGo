@@ -11,6 +11,8 @@
     "clean": "rm -rf dist node_modules"
   },
   "dependencies": {
+    "@sundogo/auth": "workspace:*",
+    "axios": "^1.7.9",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

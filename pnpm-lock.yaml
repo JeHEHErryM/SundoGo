@@ -157,6 +157,12 @@ importers:
 
   apps/landing:
     dependencies:
+      '@sundogo/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      axios:
+        specifier: ^1.7.9
+        version: 1.19.0(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@19.2.8)

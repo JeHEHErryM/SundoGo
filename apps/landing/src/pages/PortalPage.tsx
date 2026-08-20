@@ -16,9 +16,9 @@ export default function PortalPage() {
           </Link>
 
           <div className="text-center mb-12">
-            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">Choose Your Portal</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">Sign Up</h1>
             <p className="mt-3 text-slate-500 max-w-md mx-auto">
-              Select how you'd like to use SundoGo
+              Choose how you'd like to use SundoGo
             </p>
           </div>
 

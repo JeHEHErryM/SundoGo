@@ -22,15 +22,15 @@ export default function Hero() {
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <Link
-              to="/portal"
-              className="h-12 px-6 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25"
+              to="/login"
+              className="inline-flex h-12 px-6 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25"
             >
               Get Started
               <ArrowRight size={18} />
             </Link>
             <Link
               to="/portal"
-              className="h-12 px-6 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl border border-slate-200 flex items-center justify-center gap-2 transition-colors"
+              className="inline-flex h-12 px-6 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl border border-slate-200 items-center justify-center gap-2 transition-colors"
             >
               Become a Driver
             </Link>
@@ -43,16 +43,30 @@ export default function Hero() {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-primary-500 rounded-full" />
-              Cashless & cash payments
+              Cash & digital payments
             </div>
           </div>
         </div>
 
-        <div className="hidden lg:flex absolute right-10 top-1/2 -translate-y-1/2">
-          <div className="w-72 h-[480px] bg-white rounded-[2.5rem] shadow-2xl border-4 border-slate-200 p-6 flex flex-col items-center justify-center gap-4">
-            <img src="/SundoGo_Logo.svg" alt="SundoGo" className="w-24 h-24" />
-            <p className="text-lg font-bold text-slate-900">SundoGo</p>
-            <p className="text-sm text-slate-400">Coming Soon</p>
+        <div className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2">
+          <div className="relative animate-[float_6s_ease-in-out_infinite]">
+            <div className="w-[280px] h-[560px] bg-slate-900 rounded-[3rem] shadow-2xl p-3">
+              <div className="w-full h-full bg-white rounded-[2.25rem] overflow-hidden flex flex-col items-center justify-center relative">
+                <div className="absolute top-0 inset-x-0 h-7 bg-slate-900 rounded-b-2xl flex items-center justify-center">
+                  <div className="w-16 h-5 bg-black rounded-full" />
+                </div>
+
+                <img src="/SundoGo_Logo.svg" alt="SundoGo" className="w-32 h-32 mb-4" />
+                <p className="text-xl font-bold text-slate-900">SundoGo</p>
+                <p className="text-sm text-slate-400 mt-1">Mamburao, Occidental Mindoro</p>
+
+                <div className="absolute bottom-6 inset-x-6">
+                  <div className="w-full h-11 bg-primary-600 rounded-xl flex items-center justify-center">
+                    <span className="text-white text-sm font-semibold">Book a Ride</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
