@@ -23,4 +23,4 @@ RUN pnpm --filter @sundogo/api build
 
 WORKDIR /app/services/api
 EXPOSE 3001
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]
