@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { NavLink, Outlet, Link } from "react-router-dom";
 import { Home, MapPin, Wallet, User, Bell } from "lucide-react";
 import { useNotificationsStore } from "@/stores/notifications.store";
@@ -27,7 +28,15 @@ export default function Layout() {
       </header>
 
       <main className="flex-1 pb-20">
-        <Outlet />
+        <Suspense
+          fallback={
+            <div className="flex min-h-[60dvh] items-center justify-center">
+              <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+          }
+        >
+          <Outlet />
+        </Suspense>
       </main>
       <nav className="fixed bottom-0 inset-x-0 z-50 border-t border-gray-200 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
         <div className="mx-auto flex max-w-lg items-center justify-around py-2">

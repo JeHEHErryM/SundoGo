@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { Outlet, NavLink, useLocation, Link } from "react-router-dom";
 import { Home, Car, Clock, User, Bell } from "lucide-react";
 import { useAuthStore } from "@/stores/auth.store";
@@ -38,7 +38,15 @@ export default function Layout() {
       </header>
 
       <main className="flex-1 pb-20">
-        <Outlet />
+        <Suspense
+          fallback={
+            <div className="flex min-h-[60dvh] items-center justify-center">
+              <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+          }
+        >
+          <Outlet />
+        </Suspense>
       </main>
 
       {!hideNav && (
