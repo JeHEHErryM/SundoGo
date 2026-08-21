@@ -90,6 +90,12 @@ export function LoginForm({ onSubmit, registerPath = '/register', isLoading, err
           Create one
         </Link>
       </p>
+
+      <p className="mt-3 text-center text-sm">
+        <Link to="/" className="font-medium text-slate-400 transition-colors hover:text-slate-600">
+          Return to the Landing Page
+        </Link>
+      </p>
     </>
   );
 }

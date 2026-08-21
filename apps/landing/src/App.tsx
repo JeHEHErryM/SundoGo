@@ -72,7 +72,7 @@ export default function App() {
         {/* ── Passenger ── */}
         <Route path="/user/passenger/login" element={<PassengerLoginPage />} />
         <Route path="/user/passenger/register" element={<PassengerRegisterPage />} />
-        <Route path="/user/passenger" element={<ProtectedRoute><PassengerLayout /></ProtectedRoute>}>
+        <Route path="/user/passenger" element={<ProtectedRoute role="PASSENGER"><PassengerLayout /></ProtectedRoute>}>
           <Route index element={<PassengerHomePage />} />
           <Route path="booking" element={<PassengerMapBookingPage />} />
           <Route path="booking/fare" element={<PassengerFareEstimatePage />} />
@@ -90,7 +90,7 @@ export default function App() {
         {/* ── Driver ── */}
         <Route path="/user/driver/login" element={<DriverLoginPage />} />
         <Route path="/user/driver/register" element={<DriverRegisterPage />} />
-        <Route path="/user/driver" element={<ProtectedRoute><DriverLayout /></ProtectedRoute>}>
+        <Route path="/user/driver" element={<ProtectedRoute role="DRIVER"><DriverLayout /></ProtectedRoute>}>
           <Route index element={<DriverHomePage />} />
           <Route path="verification" element={<DriverVerificationPage />} />
           <Route path="booking/request" element={<DriverBookingRequestPage />} />
@@ -105,15 +105,15 @@ export default function App() {
 
         {/* ── Admin ── */}
         <Route path="/user/admin/login" element={<AdminLoginPage />} />
-        <Route path="/user/admin" element={<ProtectedRoute><AdminLayout><AdminDashboardPage /></AdminLayout></ProtectedRoute>} />
-        <Route path="/user/admin/drivers" element={<ProtectedRoute><AdminLayout><AdminDriversPage /></AdminLayout></ProtectedRoute>} />
-        <Route path="/user/admin/drivers/verification" element={<ProtectedRoute><AdminLayout><AdminVerificationQueuePage /></AdminLayout></ProtectedRoute>} />
-        <Route path="/user/admin/drivers/:id" element={<ProtectedRoute><AdminLayout><AdminDriverDetailPage /></AdminLayout></ProtectedRoute>} />
-        <Route path="/user/admin/passengers" element={<ProtectedRoute><AdminLayout><AdminPassengersPage /></AdminLayout></ProtectedRoute>} />
-        <Route path="/user/admin/bookings" element={<ProtectedRoute><AdminLayout><AdminBookingsPage /></AdminLayout></ProtectedRoute>} />
-        <Route path="/user/admin/geography" element={<ProtectedRoute><AdminLayout><AdminServiceAreasPage /></AdminLayout></ProtectedRoute>} />
-        <Route path="/user/admin/pricing" element={<ProtectedRoute><AdminLayout><AdminFareManagementPage /></AdminLayout></ProtectedRoute>} />
-        <Route path="/user/admin/reports" element={<ProtectedRoute><AdminLayout><AdminReportsPage /></AdminLayout></ProtectedRoute>} />
+        <Route path="/user/admin" element={<ProtectedRoute role="ADMIN"><AdminLayout><AdminDashboardPage /></AdminLayout></ProtectedRoute>} />
+        <Route path="/user/admin/drivers" element={<ProtectedRoute role="ADMIN"><AdminLayout><AdminDriversPage /></AdminLayout></ProtectedRoute>} />
+        <Route path="/user/admin/drivers/verification" element={<ProtectedRoute role="ADMIN"><AdminLayout><AdminVerificationQueuePage /></AdminLayout></ProtectedRoute>} />
+        <Route path="/user/admin/drivers/:id" element={<ProtectedRoute role="ADMIN"><AdminLayout><AdminDriverDetailPage /></AdminLayout></ProtectedRoute>} />
+        <Route path="/user/admin/passengers" element={<ProtectedRoute role="ADMIN"><AdminLayout><AdminPassengersPage /></AdminLayout></ProtectedRoute>} />
+        <Route path="/user/admin/bookings" element={<ProtectedRoute role="ADMIN"><AdminLayout><AdminBookingsPage /></AdminLayout></ProtectedRoute>} />
+        <Route path="/user/admin/geography" element={<ProtectedRoute role="ADMIN"><AdminLayout><AdminServiceAreasPage /></AdminLayout></ProtectedRoute>} />
+        <Route path="/user/admin/pricing" element={<ProtectedRoute role="ADMIN"><AdminLayout><AdminFareManagementPage /></AdminLayout></ProtectedRoute>} />
+        <Route path="/user/admin/reports" element={<ProtectedRoute role="ADMIN"><AdminLayout><AdminReportsPage /></AdminLayout></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

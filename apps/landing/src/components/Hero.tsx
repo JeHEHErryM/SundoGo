@@ -1,7 +1,13 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, LayoutDashboard } from 'lucide-react';
+import { useAuthStore } from '../stores/auth.store';
+import { dashboardPathFor } from './RedirectIfAuthenticated';
 
 export default function Hero() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const role = useAuthStore((s) => s.user?.role);
+  const dashboard = dashboardPathFor(role);
+
   return (
     <section className="relative pt-32 pb-20 sm:pt-40 sm:pb-28 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-accent-300/10" />
@@ -25,19 +31,31 @@ export default function Hero() {
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
-            <Link
-              to="/login"
-              className="inline-flex h-12 px-6 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25"
-            >
-              Get Started
-              <ArrowRight size={18} />
-            </Link>
-            <Link
-              to="/portal"
-              className="inline-flex h-12 px-6 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl border border-slate-200 items-center justify-center gap-2 transition-colors"
-            >
-              Become a Driver
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                to={dashboard}
+                className="inline-flex h-12 px-6 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25"
+              >
+                <LayoutDashboard size={18} />
+                Go to Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="inline-flex h-12 px-6 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-xl items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25"
+                >
+                  Get Started
+                  <ArrowRight size={18} />
+                </Link>
+                <Link
+                  to="/portal"
+                  className="inline-flex h-12 px-6 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl border border-slate-200 items-center justify-center gap-2 transition-colors"
+                >
+                  Become a Driver
+                </Link>
+              </>
+            )}
           </div>
 
           <div className="mt-10 flex items-center gap-6 text-sm text-slate-500">
@@ -68,10 +86,12 @@ export default function Hero() {
 
                 <div className="absolute bottom-5 inset-x-5">
                   <Link
-                    to="/login"
+                    to={isAuthenticated ? dashboard : "/login"}
                     className="w-full h-10 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 rounded-xl flex items-center justify-center transition-colors cursor-pointer"
                   >
-                    <span className="text-white text-sm font-semibold">Book a Ride</span>
+                    <span className="text-white text-sm font-semibold">
+                      {isAuthenticated ? "Open SundoGo" : "Book a Ride"}
+                    </span>
                   </Link>
                 </div>
               </div>

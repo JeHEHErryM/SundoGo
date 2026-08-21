@@ -1,10 +1,14 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LayoutDashboard } from 'lucide-react';
+import { useAuthStore } from '../stores/auth.store';
+import { dashboardPathFor } from './RedirectIfAuthenticated';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -21,18 +25,35 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden sm:flex items-center gap-3">
-          <Link
-            to="/login"
-            className="h-9 px-4 flex items-center justify-center text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-          >
-            Login
-          </Link>
-          <Link
-            to="/portal"
-            className="h-9 px-5 flex items-center justify-center bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg transition-colors"
-          >
-            Sign Up
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <span className="text-sm font-medium text-slate-600">
+                Hi, {user?.firstName || 'there'}!
+              </span>
+              <Link
+                to={dashboardPathFor(user?.role)}
+                className="h-9 px-5 flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                <LayoutDashboard size={16} />
+                Go to Dashboard
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="h-9 px-4 flex items-center justify-center text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                Login
+              </Link>
+              <Link
+                to="/portal"
+                className="h-9 px-5 flex items-center justify-center bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -50,20 +71,38 @@ export default function Navbar() {
         }`}
       >
         <div className="bg-white border-t border-slate-100 px-4 py-4 space-y-3">
-          <Link
-            to="/login"
-            onClick={() => setMobileOpen(false)}
-            className="block text-sm font-medium text-slate-600 hover:text-slate-900"
-          >
-            Login
-          </Link>
-          <Link
-            to="/portal"
-            onClick={() => setMobileOpen(false)}
-            className="flex items-center justify-center h-10 px-4 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg transition-colors"
-          >
-            Sign Up
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <p className="text-sm font-medium text-slate-600">
+                Hi, {user?.firstName || 'there'}!
+              </p>
+              <Link
+                to={dashboardPathFor(user?.role)}
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center h-10 px-4 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                <LayoutDashboard size={16} className="mr-2" />
+                Go to Dashboard
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                onClick={() => setMobileOpen(false)}
+                className="block text-sm font-medium text-slate-600 hover:text-slate-900"
+              >
+                Login
+              </Link>
+              <Link
+                to="/portal"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center justify-center h-10 px-4 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg transition-colors"
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>

@@ -3,7 +3,7 @@ import api from "../lib/api";
 
 interface User {
   id: string;
-  name: string;
+  name?: string;
   email: string;
   phone?: string;
   role: "PASSENGER" | "DRIVER" | "ADMIN";
@@ -36,10 +36,38 @@ interface AuthState {
 const TOKEN_KEY = "sundogo_token";
 const USER_KEY = "sundogo_user";
 
+interface RawApiUser {
+  id: string;
+  email: string;
+  role: "PASSENGER" | "DRIVER" | "ADMIN";
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  passenger?: { firstName?: string; lastName?: string; phone?: string } | null;
+  driver?: { firstName?: string; lastName?: string; phone?: string } | null;
+}
+
+/** Flattens profile names/phone to the top level so UI can rely on user.firstName. */
+function normalizeUser(raw: RawApiUser): User {
+  const profile = raw.passenger ?? raw.driver ?? null;
+  const firstName = raw.firstName ?? profile?.firstName;
+  const lastName = raw.lastName ?? profile?.lastName;
+  const name =
+    [firstName, lastName].filter(Boolean).join(" ") || raw.email.split("@")[0];
+  return {
+    ...raw,
+    userId: raw.id,
+    name,
+    firstName,
+    lastName,
+    phone: raw.phone ?? profile?.phone,
+  };
+}
+
 function readStoredUser(): User | null {
   try {
     const raw = localStorage.getItem(USER_KEY);
-    return raw ? JSON.parse(raw) : null;
+    return raw ? normalizeUser(JSON.parse(raw)) : null;
   } catch {
     return null;
   }
@@ -55,7 +83,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true });
     try {
       const { data } = await api.post("/api/auth/login", { email, password });
-      const user: User = data.user;
+      const user = normalizeUser(data.user);
       localStorage.setItem(TOKEN_KEY, data.accessToken);
       localStorage.setItem(USER_KEY, JSON.stringify(user));
       set({
@@ -82,7 +110,7 @@ export const useAuthStore = create<AuthState>((set) => ({
           phone: regData.phone,
           role: regData.role,
         });
-      const user: User = data.user;
+      const user = normalizeUser(data.user);
       localStorage.setItem(TOKEN_KEY, data.accessToken);
       localStorage.setItem(USER_KEY, JSON.stringify(user));
       set({
@@ -123,9 +151,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     const userStr = params.get("user");
     if (token && userStr) {
       try {
-        const user = JSON.parse(userStr) as User;
+        const user = normalizeUser(JSON.parse(userStr));
         localStorage.setItem(TOKEN_KEY, token);
-        localStorage.setItem(USER_KEY, userStr);
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
         set({ user, token, isAuthenticated: true });
         window.history.replaceState({}, "", window.location.pathname);
       } catch {

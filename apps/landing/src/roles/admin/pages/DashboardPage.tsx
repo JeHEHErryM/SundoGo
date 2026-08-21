@@ -12,6 +12,7 @@ import {
   Route,
 } from "lucide-react";
 import api from "@/lib/api";
+import { useAuthStore } from "@/stores/auth.store";
 import type { ApiResponse, Booking } from "@sundogo/types";
 import PageHeader from "@/components/shared/PageHeader";
 import StatCard from "@/components/shared/StatCard";
@@ -31,6 +32,7 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
 
   const { data: stats, isLoading, isError, refetch } = useQuery({
     queryKey: ["admin", "dashboard"],
@@ -53,7 +55,7 @@ export default function DashboardPage() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Dashboard" description="Overview of platform activity" />
+        <PageHeader title={`Welcome, ${user?.firstName || "Admin"}!`} description="Overview of platform activity" />
         <div className="rounded-2xl border border-slate-200 bg-white">
           <EmptyState
             title="Couldn't load dashboard"
@@ -74,7 +76,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Dashboard" description="Overview of platform activity" />
+      <PageHeader title={`Welcome, ${user?.firstName || "Admin"}!`} description="Overview of platform activity" />
 
       {isLoading || !stats ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

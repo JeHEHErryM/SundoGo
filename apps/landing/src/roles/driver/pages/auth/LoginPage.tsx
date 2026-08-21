@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth.store";
 import { AuthLayout, LoginForm } from "@sundogo/auth";
+import RedirectIfAuthenticated from "@/components/RedirectIfAuthenticated";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export default function LoginPage() {
 
   return (
     <AuthLayout appName="Driver">
+      <RedirectIfAuthenticated />
       <LoginForm
         onSubmit={handleSubmit}
         isLoading={isLoading}

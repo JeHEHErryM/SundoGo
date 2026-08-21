@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthLayout, LoginForm } from '@sundogo/auth';
 import { useAuthStore } from '@/stores/auth.store';
+import RedirectIfAuthenticated, { dashboardPathFor } from '@/components/RedirectIfAuthenticated';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -14,12 +15,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { role } = await login(email, password);
-      const roleRedirects: Record<string, string> = {
-        PASSENGER: '/user/passenger',
-        DRIVER: '/user/driver',
-        ADMIN: '/user/admin',
-      };
-      navigate(roleRedirects[role] || '/user/passenger');
+      navigate(dashboardPathFor(role));
     } catch (err: unknown) {
       const message =
         err instanceof Error
@@ -33,6 +29,7 @@ export default function LoginPage() {
 
   return (
     <AuthLayout>
+      <RedirectIfAuthenticated />
       <LoginForm
         onSubmit={handleSubmit}
         isLoading={loading}

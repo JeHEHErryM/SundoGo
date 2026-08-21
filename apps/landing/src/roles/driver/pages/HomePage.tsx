@@ -61,7 +61,7 @@ export default function HomePage() {
             <p className="flex items-center gap-1.5 text-sm text-slate-300">
               {getTimeIcon()} Good {getTimeOfDay()},
             </p>
-            <h1 className="mt-0.5 text-xl font-bold">{user?.firstName ?? "Driver"}</h1>
+            <h1 className="mt-0.5 text-xl font-bold">Welcome, {user?.firstName || "Driver"}!</h1>
           </div>
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-base font-bold">
             {(user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "")}
