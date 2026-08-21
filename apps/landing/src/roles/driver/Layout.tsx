@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, Link } from "react-router-dom";
 import { Home, MapPin, Wallet, User, Bell } from "lucide-react";
 import { useNotificationsStore } from "@/stores/notifications.store";
 import { useOfferListener } from "./hooks/useOfferListener";
@@ -18,9 +18,11 @@ export default function Layout() {
   return (
     <div className="flex min-h-dvh flex-col bg-gray-50">
       <header className="sticky top-0 z-40 bg-white border-b border-gray-200">
-        <div className="flex items-center h-14 px-4 max-w-lg mx-auto">
-          <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-9 w-auto" />
-          <span className="ml-2 text-base font-bold text-slate-900">SundoGo</span>
+        <div className="flex items-center h-14 px-4">
+          <Link to="/" className="flex items-center" aria-label="SundoGo home">
+            <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-9 w-auto" />
+            <span className="ml-2 text-base font-bold text-slate-900">SundoGo</span>
+          </Link>
         </div>
       </header>
 

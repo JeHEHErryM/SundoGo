@@ -66,7 +66,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const sidebar = (
     <div className="flex h-full flex-col bg-slate-900 text-white">
       <div className="flex h-16 items-center justify-between border-b border-white/10 px-4">
-        <div className="flex items-center gap-2.5">
+        <Link to="/" className="flex items-center gap-2.5" aria-label="SundoGo home">
           <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-8 w-auto" />
           <div className="leading-tight">
             <span className="block text-sm font-bold tracking-tight">SundoGo</span>
@@ -74,7 +74,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               Admin
             </span>
           </div>
-        </div>
+        </Link>
         <button
           onClick={onClose}
           aria-label="Close menu"

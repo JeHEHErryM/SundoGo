@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Outlet, NavLink, useLocation } from "react-router-dom";
+import { Outlet, NavLink, useLocation, Link } from "react-router-dom";
 import { Home, Car, Clock, User, Bell } from "lucide-react";
 import { useAuthStore } from "@/stores/auth.store";
 
@@ -29,9 +29,11 @@ export default function Layout() {
   return (
     <div className="min-h-dvh flex flex-col bg-slate-50">
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
-        <div className="flex items-center h-14 px-4 max-w-lg mx-auto">
-          <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-9 w-auto" />
-          <span className="ml-2 text-base font-bold text-slate-900">SundoGo</span>
+        <div className="flex items-center h-14 px-4">
+          <Link to="/" className="flex items-center" aria-label="SundoGo home">
+            <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-9 w-auto" />
+            <span className="ml-2 text-base font-bold text-slate-900">SundoGo</span>
+          </Link>
         </div>
       </header>
 
