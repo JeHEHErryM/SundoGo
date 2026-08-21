@@ -1,7 +1,7 @@
 {
   "installCommand": "pnpm install --no-frozen-lockfile",
-  "buildCommand": "pnpm --filter @sundogo/landing build",
-  "outputDirectory": "apps/landing/dist",
+  "buildCommand": "npx turbo build --filter=@sundogo/driver...",
+  "outputDirectory": "apps/driver/dist",
   "framework": null,
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
