@@ -1,5 +1,7 @@
 FROM node:22-slim
 
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
@@ -15,6 +17,7 @@ COPY . .
 
 RUN pnpm --filter @sundogo/types build
 RUN pnpm --filter @sundogo/validation build
+ENV DATABASE_URL="postgresql://unused:unused@localhost:5432/unused"
 RUN pnpm --filter @sundogo/api db:generate
 RUN pnpm --filter @sundogo/api build
 
