@@ -11,6 +11,7 @@ interface AuthState {
   logout: () => void;
   setUser: (user: Driver) => void;
   setVehicle: (vehicle: Vehicle) => void;
+  consumeUrlToken: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -26,6 +27,20 @@ export const useAuthStore = create<AuthState>()(
         set({ user: null, token: null, vehicle: null, isAuthenticated: false }),
       setUser: (user) => set({ user }),
       setVehicle: (vehicle) => set({ vehicle }),
+      consumeUrlToken: () => {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("token");
+        const userStr = params.get("user");
+        if (token && userStr) {
+          try {
+            const user = JSON.parse(userStr) as Driver;
+            set({ user, token, isAuthenticated: true });
+            window.history.replaceState({}, "", window.location.pathname);
+          } catch {
+            // ignore
+          }
+        }
+      },
     }),
     { name: "driver-auth" }
   )

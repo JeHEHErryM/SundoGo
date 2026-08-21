@@ -14,9 +14,9 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await api.post("/auth/login", { email, password });
-      const { user, token } = res.data;
-      login(user, token);
+      const res = await api.post("/api/auth/login", { email, password });
+      const { user, accessToken } = res.data;
+      login(user, accessToken);
       navigate("/");
     } catch (err: unknown) {
       const message =

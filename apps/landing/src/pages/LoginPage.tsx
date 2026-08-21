@@ -16,8 +16,8 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const res = await api.post('/auth/login', { email, password });
-      const { user } = res.data;
+      const res = await api.post('/api/auth/login', { email, password });
+      const { user, accessToken } = res.data;
 
       const roleRedirects: Record<string, string> = {
         PASSENGER: PASSENGER_APP,
@@ -25,8 +25,12 @@ export default function LoginPage() {
         ADMIN: ADMIN_APP,
       };
 
-      const redirectUrl = roleRedirects[user.role] || PASSENGER_APP;
-      window.location.href = redirectUrl;
+      const redirectBase = roleRedirects[user.role] || PASSENGER_APP;
+      const params = new URLSearchParams({
+        token: accessToken,
+        user: JSON.stringify(user),
+      });
+      window.location.href = `${redirectBase}?${params.toString()}`;
     } catch (err: unknown) {
       const message =
         err instanceof Error

@@ -4,13 +4,6 @@ import { useMutation } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth.store";
 import { AuthLayout, LoginForm } from "@sundogo/auth";
-import type { Driver, Vehicle, ApiResponse } from "@sundogo/types";
-
-interface LoginResponse {
-  token: string;
-  driver: Driver;
-  vehicle?: Vehicle;
-}
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -19,12 +12,11 @@ export default function LoginPage() {
 
   const mutation = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      const { data } = await api.post<ApiResponse<LoginResponse>>("/api/auth/login", { email, password });
-      if (!data.success || !data.data) throw new Error(data.error || "Login failed");
-      return data.data;
+      const { data } = await api.post("/api/auth/login", { email, password });
+      return data as { user: any; accessToken: string };
     },
     onSuccess: (result) => {
-      login(result.driver, result.token, result.vehicle);
+      login(result.user, result.accessToken);
       navigate("/", { replace: true });
     },
     onError: (err: Error) => setError(err.message),

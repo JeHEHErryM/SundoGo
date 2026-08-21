@@ -13,6 +13,7 @@ interface AuthState {
   isAuthenticated: boolean;
   login: (user: User, token: string) => void;
   logout: () => void;
+  consumeUrlToken: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -37,5 +38,22 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem("admin_token");
     localStorage.removeItem("admin_user");
     set({ user: null, token: null, isAuthenticated: false });
+  },
+
+  consumeUrlToken: () => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const userStr = params.get("user");
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr) as User;
+        localStorage.setItem("admin_token", token);
+        localStorage.setItem("admin_user", userStr);
+        set({ user, token, isAuthenticated: true });
+        window.history.replaceState({}, "", window.location.pathname);
+      } catch {
+        // ignore
+      }
+    }
   },
 }));
