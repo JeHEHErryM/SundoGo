@@ -24,10 +24,11 @@ apps/*/src/**/*.js.map
 apps/*/src/**/*.d.ts
 apps/*/src/**/*.d.ts.map
 
-# Environment files
+# Environment files (secrets)
 .env
 .env.local
 .env.*.local
+!.env.production
 
 # IDE
 .vscode/
@@ -64,4 +65,3 @@ prisma/migrations/**/migration_lock.toml
 *.key
 
 .vercel
-.env*
