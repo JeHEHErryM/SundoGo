@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Car, Navigation, Loader2, Phone } from "lucide-react";
+import { Navigation, Loader2, Phone } from "lucide-react";
 import api from "@/lib/api";
+import Map from "@/components/map/Map";
 import { useDriverStore } from "@/stores/driver.store";
 import { useActiveBooking } from "@/roles/driver/hooks/useActiveBooking";
+import { useDriverGeolocation } from "@/roles/driver/hooks/useDriverGeolocation";
 import { Avatar, LoadingOverlay } from "@/components/shared";
 import { BookingStatus } from "@sundogo/types";
 
@@ -12,6 +14,7 @@ export default function ActiveTripPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const acceptBooking = useDriverStore((s) => s.acceptBooking);
+  const driverPos = useDriverGeolocation();
 
   const { data: booking, isLoading } = useActiveBooking();
 
@@ -49,13 +52,27 @@ export default function ActiveTripPage() {
     <div className="flex min-h-dvh flex-col bg-gray-50">
       <LoadingOverlay show={completeMutation.isPending} message="Completing your trip ..." />
 
-      {/* Map Area */}
-      <div className="relative h-[40dvh] bg-gradient-to-br from-slate-700 to-slate-900">
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white/60">
-          <Car className="mb-3 h-16 w-16 animate-pulse" />
-          <p className="text-sm font-medium">Trip In Progress</p>
-          <p className="mt-1 text-xs opacity-50">Live navigation active</p>
-        </div>
+      {/* Live Map */}
+      <div className="relative h-[40dvh]">
+        <Map
+          pickup={
+            booking
+              ? { lat: booking.pickupLat, lng: booking.pickupLng, address: booking.pickupAddress ?? "Pickup" }
+              : null
+          }
+          destination={
+            booking
+              ? {
+                  lat: booking.destinationLat,
+                  lng: booking.destinationLng,
+                  address: booking.destinationAddress ?? "Destination",
+                }
+              : null
+          }
+          driverLocation={driverPos}
+          className="w-full h-full"
+          showRoute
+        />
 
         {/* Trip indicator */}
         <div className="absolute left-4 right-4 top-4 flex items-center justify-between">

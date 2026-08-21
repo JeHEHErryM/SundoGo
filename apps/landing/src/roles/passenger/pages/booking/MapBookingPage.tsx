@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useBookingStore } from "../../stores/booking.store";
 import { ArrowLeft, MapPin, Navigation, Search, X, LocateFixed, Loader2 } from "lucide-react";
 import Map from "../../Map";
+import { reverseGeocode } from "@/lib/geocode";
 
 // Mamburao, Occidental Mindoro — service area center.
 const MAMBURAO_CENTER = { lat: 13.1184, lng: 120.6106 };
@@ -14,6 +15,25 @@ export default function MapBookingPage() {
   const [search, setSearch] = useState("");
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState("");
+  const [resolving, setResolving] = useState(false);
+
+  const applyPoint = async (lat: number, lng: number, fallbackAddress: string) => {
+    setResolving(true);
+    const address = await reverseGeocode(lat, lng);
+    setResolving(false);
+    const loc = { lat, lng, address: address === "Selected location" ? fallbackAddress : address };
+    if (tab === "pickup") {
+      setPickup(loc);
+      setTab("destination");
+    } else {
+      setDestination(loc);
+    }
+  };
+
+  const handleMapSelect = (point: { lat: number; lng: number }) => {
+    setLocationError("");
+    void applyPoint(point.lat, point.lng, tab === "pickup" ? "Pickup location" : search.trim() || "Destination");
+  };
 
   const useCurrentLocation = () => {
     setLocationError("");
@@ -81,7 +101,30 @@ export default function MapBookingPage() {
     <div className="min-h-dvh flex flex-col bg-white">
       {/* Map */}
       <div className="relative flex-1 min-h-[40dvh]">
-        <Map pickup={pickup} destination={destination} className="w-full h-full" showRoute={!!pickup && !!destination} />
+        <Map
+          pickup={pickup}
+          destination={destination}
+          className="w-full h-full"
+          showRoute={!!pickup && !!destination}
+          onSelect={(!pickup || !destination) ? handleMapSelect : undefined}
+        />
+
+        {/* Tap hint */}
+        {(!pickup || !destination) && (
+          <div className="pointer-events-none absolute inset-x-0 top-20 flex justify-center px-4">
+            <div className="flex items-center gap-2 rounded-full bg-slate-900/80 px-4 py-2 text-xs font-medium text-white backdrop-blur-sm">
+              {resolving ? (
+                <>
+                  <Loader2 size={12} className="animate-spin" /> Resolving address ...
+                </>
+              ) : (
+                <>
+                  <MapPin size={12} /> Tap the map to set your {tab === "pickup" ? "pickup" : "destination"}
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Back button */}
         <button

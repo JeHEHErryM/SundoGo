@@ -26,11 +26,11 @@ apps/*/src/**/*.d.ts.map
 # Hand-written declarations needed by the build
 !apps/*/src/vite-env.d.ts
 
-# Environment files (secrets)
+# Environment files (secrets) — all env files stay local; production
+# values live in Vercel/Railway project settings
 .env
-.env.local
-.env.*.local
-!.env.production
+.env.*
+!.env.example
 
 # IDE
 .vscode/

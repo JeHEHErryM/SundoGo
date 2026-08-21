@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Navigation, Phone, MapPin, Loader2, ArrowLeft } from "lucide-react";
+import { Phone, MapPin, Loader2, ArrowLeft } from "lucide-react";
 import api from "@/lib/api";
+import Map from "@/components/map/Map";
 import { useDriverStore } from "@/stores/driver.store";
 import { useActiveBooking } from "@/roles/driver/hooks/useActiveBooking";
+import { useDriverGeolocation } from "@/roles/driver/hooks/useDriverGeolocation";
 import { Avatar, LoadingOverlay } from "@/components/shared";
 import { BookingStatus } from "@sundogo/types";
 
@@ -12,6 +14,7 @@ export default function NavigateToPickupPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const acceptBooking = useDriverStore((s) => s.acceptBooking);
+  const driverPos = useDriverGeolocation();
 
   const { data: booking, isLoading } = useActiveBooking();
 
@@ -64,28 +67,32 @@ export default function NavigateToPickupPage() {
     <div className="flex min-h-dvh flex-col bg-gray-50">
       <LoadingOverlay show={advance.isPending} message="Updating trip status ..." />
 
-      {/* Map Placeholder */}
-      <div className="relative h-[45dvh] bg-gradient-to-br from-primary-800 to-primary-600">
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white/70">
-          <Navigation className="mb-3 h-16 w-16 animate-pulse" />
-          <p className="text-sm font-medium">Navigation to Pickup</p>
-          <p className="mt-1 text-xs opacity-60">Map will show turn-by-turn directions</p>
-        </div>
-
-        {/* Pickup pin illustration */}
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2">
-          <div className="relative">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success-500 shadow-lg shadow-success-500/40">
-              <MapPin className="h-5 w-5 text-white" />
-            </div>
-            <div className="absolute -bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-success-500" />
-          </div>
-        </div>
+      {/* Live Map */}
+      <div className="relative h-[45dvh]">
+        <Map
+          pickup={
+            booking
+              ? { lat: booking.pickupLat, lng: booking.pickupLng, address: booking.pickupAddress ?? "Pickup" }
+              : null
+          }
+          destination={
+            booking
+              ? {
+                  lat: booking.destinationLat,
+                  lng: booking.destinationLng,
+                  address: booking.destinationAddress ?? "Destination",
+                }
+              : null
+          }
+          driverLocation={driverPos}
+          className="w-full h-full"
+          showRoute
+        />
 
         {/* Back button */}
         <button
           onClick={() => navigate("/user/driver/", { replace: true })}
-          className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"
+          className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-lg backdrop-blur-sm"
           aria-label="Back"
         >
           <ArrowLeft size={18} />
