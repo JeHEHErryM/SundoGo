@@ -1,89 +1,146 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
-import { Navigation, User, Phone, MapPin, MessageSquare, Loader2 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Navigation, User, Phone, MapPin, Loader2, ArrowLeft } from "lucide-react";
 import api from "@/lib/api";
 import { useDriverStore } from "@/stores/driver.store";
-import type { Trip, ApiResponse } from "@sundogo/types";
+import { useActiveBooking } from "@/roles/driver/hooks/useActiveBooking";
+import { BookingStatus } from "@sundogo/types";
 
 export default function NavigateToPickupPage() {
   const navigate = useNavigate();
-  const { currentBooking } = useDriverStore();
+  const queryClient = useQueryClient();
+  const acceptBooking = useDriverStore((s) => s.acceptBooking);
 
-  const startTripMutation = useMutation({
-    mutationFn: async () => {
-      const { data } = await api.post<ApiResponse<Trip>>("/api/trips/start", {
-        bookingId: currentBooking?.id,
-      });
-      return data.data!;
+  const { data: booking, isLoading } = useActiveBooking();
+
+  // Keep the store fresh for other pages.
+  useEffect(() => {
+    if (booking) acceptBooking(booking);
+  }, [booking, acceptBooking]);
+
+  const advance = useMutation({
+    mutationFn: async (nextStatus: BookingStatus) => {
+      const { data } = await api.patch(`/api/bookings/${booking!.id}/status`, { status: nextStatus });
+      return data.data;
     },
-    onSuccess: (trip) => {
-      useDriverStore.getState().startTrip(trip);
-      navigate("/user/driver/booking/active", { replace: true });
+    onSuccess: (_data, nextStatus) => {
+      void queryClient.invalidateQueries({ queryKey: ["driver", "active-booking"] });
+      if (nextStatus === BookingStatus.IN_PROGRESS) {
+        navigate("/user/driver/booking/active", { replace: true });
+      }
     },
   });
 
-  const booking = currentBooking;
+  // No active booking to navigate to.
+  useEffect(() => {
+    if (!isLoading && !booking) navigate("/user/driver/", { replace: true });
+    if (booking?.status === BookingStatus.IN_PROGRESS) {
+      navigate("/user/driver/booking/active", { replace: true });
+    }
+  }, [isLoading, booking, navigate]);
+
+  if (isLoading || !booking) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
+      </div>
+    );
+  }
+
+  const step =
+    booking.status === BookingStatus.ACCEPTED
+      ? { label: "I'm on My Way", next: BookingStatus.DRIVER_ARRIVING }
+      : booking.status === BookingStatus.DRIVER_ARRIVING
+        ? { label: "Arrived at Pickup", next: BookingStatus.DRIVER_ARRIVED }
+        : { label: "Start Trip", next: BookingStatus.IN_PROGRESS };
+
+  const stepIndex = { [BookingStatus.ACCEPTED]: 0, [BookingStatus.DRIVER_ARRIVING]: 1, [BookingStatus.DRIVER_ARRIVED]: 2 }[
+    booking.status as "ACCEPTED" | "DRIVER_ARRIVING" | "DRIVER_ARRIVED"
+  ] ?? 0;
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-50">
       {/* Map Placeholder */}
       <div className="relative h-[45dvh] bg-gradient-to-br from-primary-800 to-primary-600">
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white/70">
-          <Navigation className="h-16 w-16 mb-3 animate-pulse" />
+          <Navigation className="mb-3 h-16 w-16 animate-pulse" />
           <p className="text-sm font-medium">Navigation to Pickup</p>
-          <p className="text-xs opacity-60 mt-1">Map will show turn-by-turn directions</p>
+          <p className="mt-1 text-xs opacity-60">Map will show turn-by-turn directions</p>
         </div>
 
         {/* Pickup pin illustration */}
         <div className="absolute bottom-20 left-1/2 -translate-x-1/2">
           <div className="relative">
-            <div className="h-10 w-10 rounded-full bg-success-500 shadow-lg shadow-success-500/40 flex items-center justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success-500 shadow-lg shadow-success-500/40">
               <MapPin className="h-5 w-5 text-white" />
             </div>
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-3 w-3 rotate-45 bg-success-500" />
+            <div className="absolute -bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-success-500" />
           </div>
         </div>
 
         {/* Back button */}
         <button
-          onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 flex h-10 w-10 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"
+          onClick={() => navigate("/user/driver/", { replace: true })}
+          className="absolute left-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm"
+          aria-label="Back"
         >
-          ←
+          <ArrowLeft size={18} />
         </button>
       </div>
 
       {/* Bottom Sheet */}
-      <div className="mx-auto -mt-6 w-full max-w-lg flex-1 rounded-t-3xl bg-white px-5 pt-6 pb-6 shadow-lg">
+      <div className="safe-area-pb mx-auto -mt-6 w-full max-w-lg flex-1 rounded-t-3xl bg-white px-5 pb-6 pt-6 shadow-lg">
+        {/* Stepper */}
+        <div className="mb-5 flex items-center gap-2">
+          {["Accepted", "On the way", "Arrived"].map((label, i) => (
+            <div key={label} className="flex flex-1 flex-col gap-1.5">
+              <div
+                className={`h-1.5 rounded-full ${i <= stepIndex ? "bg-primary-500" : "bg-gray-200"}`}
+              />
+              <span
+                className={`text-[10px] font-medium uppercase tracking-wide ${
+                  i <= stepIndex ? "text-primary-600" : "text-gray-400"
+                }`}
+              >
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-gray-800">Heading to Pickup</h2>
-            <p className="text-sm text-gray-500">{booking?.pickupAddress ?? "Pickup location"}</p>
+            <p className="text-sm text-gray-500">{booking.pickupAddress ?? "Pickup location"}</p>
           </div>
-          {booking?.pickupDistanceKm && (
+          {booking.pickupDistanceKm != null && (
             <span className="rounded-full bg-primary-100 px-3 py-1 text-sm font-semibold text-primary-700">
-              {booking.pickupDistanceKm} km
+              {Number(booking.pickupDistanceKm).toFixed(1)} km
             </span>
           )}
         </div>
 
         {/* Passenger Info */}
-        <div className="flex items-center gap-3 rounded-xl bg-gray-50 p-4 mb-4">
+        <div className="mb-4 flex items-center gap-3 rounded-xl bg-gray-50 p-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 text-primary-600">
             <User className="h-6 w-6" />
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-gray-800">Passenger</p>
+            <p className="font-semibold text-gray-800">
+              {[booking.passenger?.firstName, booking.passenger?.lastName].filter(Boolean).join(" ") || "Passenger"}
+            </p>
             <p className="text-sm text-gray-500">Waiting at pickup</p>
           </div>
-          <div className="flex gap-2">
-            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-success-100 text-success-600 transition-colors hover:bg-success-200">
+          {booking.passenger?.phone && (
+            <a
+              href={`tel:${booking.passenger.phone}`}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-success-100 text-success-600 transition-colors hover:bg-success-200"
+              aria-label="Call passenger"
+            >
               <Phone className="h-5 w-5" />
-            </button>
-            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-600 transition-colors hover:bg-primary-200">
-              <MessageSquare className="h-5 w-5" />
-            </button>
-          </div>
+            </a>
+          )}
         </div>
 
         {/* Route Info */}
@@ -97,28 +154,34 @@ export default function NavigateToPickupPage() {
             <div className="flex-1 space-y-4">
               <div>
                 <p className="text-xs text-gray-400">Pickup</p>
-                <p className="text-sm font-medium text-gray-800">{booking?.pickupAddress ?? "Pickup"}</p>
+                <p className="text-sm font-medium text-gray-800">{booking.pickupAddress ?? "Pickup"}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-400">Destination</p>
-                <p className="text-sm font-medium text-gray-800">{booking?.destinationAddress ?? "Destination"}</p>
+                <p className="text-sm font-medium text-gray-800">{booking.destinationAddress ?? "Destination"}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Arrived Button */}
+        {advance.isError && (
+          <p className="mb-3 rounded-xl bg-danger-50 px-4 py-2.5 text-center text-sm text-danger-700">
+            Something went wrong. Please try again.
+          </p>
+        )}
+
+        {/* Action Button */}
         <button
-          onClick={() => startTripMutation.mutate()}
-          disabled={startTripMutation.isPending}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary-600 py-4 text-base font-semibold text-white shadow-lg shadow-primary-600/25 transition-all hover:bg-primary-700 active:scale-[0.98] disabled:opacity-60"
+          onClick={() => advance.mutate(step.next)}
+          disabled={advance.isPending}
+          className="press flex w-full items-center justify-center gap-2 rounded-2xl bg-primary-600 py-4 text-base font-semibold text-white shadow-lg shadow-primary-600/25 transition-all hover:bg-primary-700 active:scale-[0.98] disabled:opacity-60"
         >
-          {startTripMutation.isPending ? (
+          {advance.isPending ? (
             <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
             <>
               <MapPin className="h-5 w-5" />
-              Arrived at Pickup — Start Trip
+              {step.label}
             </>
           )}
         </button>

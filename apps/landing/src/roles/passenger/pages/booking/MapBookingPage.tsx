@@ -1,37 +1,68 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBookingStore } from "../../stores/booking.store";
-import { ArrowLeft, MapPin, Navigation, Search, X, LocateFixed } from "lucide-react";
+import { ArrowLeft, MapPin, Navigation, Search, X, LocateFixed, Loader2 } from "lucide-react";
 import Map from "../../Map";
+
+// Mamburao, Occidental Mindoro — service area center.
+const MAMBURAO_CENTER = { lat: 13.1184, lng: 120.6106 };
 
 export default function MapBookingPage() {
   const navigate = useNavigate();
-  const { pickup, destination, setPickup, setDestination, setBookingStatus } = useBookingStore();
+  const { pickup, destination, setPickup, setDestination } = useBookingStore();
   const [tab, setTab] = useState<"pickup" | "destination">(pickup ? "destination" : "pickup");
   const [search, setSearch] = useState("");
-  const [simulating, setSimulating] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState("");
 
-  const handleSimulateLocation = () => {
-    setSimulating(true);
-    setTimeout(() => {
-      const loc = {
-        lat: 10.3157 + (Math.random() - 0.5) * 0.02,
-        lng: 123.8854 + (Math.random() - 0.5) * 0.02,
-        address: tab === "pickup" ? "Current Location" : search || "Selected Destination",
-      };
-      if (tab === "pickup") {
-        setPickup(loc);
-        setTab("destination");
-      } else {
-        setDestination(loc);
-      }
-      setSimulating(false);
-    }, 800);
+  const useCurrentLocation = () => {
+    setLocationError("");
+    if (!("geolocation" in navigator)) {
+      setLocationError("Location is not available on this device.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        const loc = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          address: "Current Location",
+        };
+        if (tab === "pickup") {
+          setPickup(loc);
+          setTab("destination");
+        } else {
+          setDestination(loc);
+        }
+      },
+      () => {
+        setLocating(false);
+        // Fall back to the Mamburao town center when permission is denied.
+        const loc = {
+          ...MAMBURAO_CENTER,
+          address: tab === "pickup" ? "Mamburao Town Center" : search || "Mamburao Town Center",
+        };
+        if (tab === "pickup") {
+          setPickup(loc);
+          setTab("destination");
+        } else {
+          setDestination(loc);
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
+
+  const confirmDestination = () => {
+    if (!search.trim()) return;
+    // Approximate point at the town center until map selection is available.
+    setDestination({ ...MAMBURAO_CENTER, address: search.trim() });
   };
 
   const handleConfirm = () => {
     if (pickup && destination) {
-      setBookingStatus("fare_estimate");
       navigate("/user/passenger/booking/fare");
     }
   };
@@ -56,17 +87,10 @@ export default function MapBookingPage() {
         <button
           onClick={() => navigate(-1)}
           className="absolute top-4 left-4 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center z-10"
+          aria-label="Go back"
         >
           <ArrowLeft size={20} className="text-slate-700" />
         </button>
-
-        {/* Center pin indicator */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
-          <div className="flex flex-col items-center">
-            <MapPin size={32} className={tab === "pickup" ? "text-primary-600" : "text-emerald-600"} fill={tab === "pickup" ? "#2563eb" : "#059669"} />
-            <div className="w-3 h-1 bg-black/10 rounded-full blur-sm mt-0.5" />
-          </div>
-        </div>
       </div>
 
       {/* Bottom panel */}
@@ -95,9 +119,15 @@ export default function MapBookingPage() {
                 <span className="text-sm text-slate-400">Pickup location</span>
               )}
               {pickup && (
-                <button onClick={(e) => { e.stopPropagation(); handleClear("pickup"); }} className="p-1 hover:bg-slate-200 rounded-lg">
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => { e.stopPropagation(); handleClear("pickup"); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleClear("pickup"); }}
+                  className="p-1 hover:bg-slate-200 rounded-lg"
+                >
                   <X size={14} className="text-slate-400" />
-                </button>
+                </span>
               )}
             </button>
 
@@ -116,9 +146,15 @@ export default function MapBookingPage() {
                 <span className="text-sm text-slate-400">Where are you going?</span>
               )}
               {destination && (
-                <button onClick={(e) => { e.stopPropagation(); handleClear("destination"); }} className="p-1 hover:bg-slate-200 rounded-lg">
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => { e.stopPropagation(); handleClear("destination"); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleClear("destination"); }}
+                  className="p-1 hover:bg-slate-200 rounded-lg"
+                >
                   <X size={14} className="text-slate-400" />
-                </button>
+                </span>
               )}
             </button>
           </div>
@@ -132,34 +168,52 @@ export default function MapBookingPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && tab === "destination") confirmDestination(); }}
               placeholder={tab === "pickup" ? "Search pickup location" : "Search destination"}
-              className="w-full h-11 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:bg-white focus:border-primary-500 transition-colors"
+              className="w-full h-11 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:bg-white focus:border-primary-500 transition-colors outline-none"
               autoFocus
             />
           </div>
         ) : null}
 
-        {/* Simulate button (placeholder for map location selection) */}
-        <button
-          onClick={handleSimulateLocation}
-          disabled={simulating}
-          className="w-full h-11 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 disabled:opacity-50 text-slate-700 font-medium rounded-xl flex items-center justify-center gap-2 transition-colors text-sm"
-        >
-          {simulating ? (
-            <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <>
-              <LocateFixed size={16} />
-              {tab === "pickup" ? "Use Current Location" : "Pick on Map"}
-            </>
-          )}
-        </button>
+        {locationError && (
+          <p className="text-xs text-danger-600">{locationError}</p>
+        )}
+
+        {/* Location actions */}
+        {!pickup || !destination ? (
+          <div className="flex gap-2">
+            <button
+              onClick={useCurrentLocation}
+              disabled={locating}
+              className="flex-1 h-11 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 disabled:opacity-50 text-slate-700 font-medium rounded-xl flex items-center justify-center gap-2 transition-colors text-sm"
+            >
+              {locating ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <>
+                  <LocateFixed size={16} />
+                  Use Current Location
+                </>
+              )}
+            </button>
+            {tab === "destination" && search.trim() && !destination && (
+              <button
+                onClick={confirmDestination}
+                className="flex-1 h-11 bg-primary-50 hover:bg-primary-100 text-primary-700 font-medium rounded-xl flex items-center justify-center gap-2 transition-colors text-sm"
+              >
+                <MapPin size={16} />
+                Set "{search.trim().slice(0, 18)}{search.trim().length > 18 ? "…" : ""}"
+              </button>
+            )}
+          </div>
+        ) : null}
 
         {/* Confirm button */}
         <button
           onClick={handleConfirm}
           disabled={!pickup || !destination}
-          className="w-full h-13 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25 text-[15px]"
+          className="press w-full h-13 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25 text-[15px]"
         >
           <Navigation size={18} />
           Get Fare Estimate

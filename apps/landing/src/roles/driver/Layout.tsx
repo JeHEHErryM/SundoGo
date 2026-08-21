@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { Home, MapPin, Wallet, User, Bell } from "lucide-react";
 import { useNotificationsStore } from "@/stores/notifications.store";
+import { useOfferListener } from "./hooks/useOfferListener";
 
 const navItems = [
   { to: "/user/driver/", icon: Home, label: "Home" },
@@ -12,6 +13,7 @@ const navItems = [
 
 export default function Layout() {
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
+  useOfferListener();
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-50">

@@ -1,28 +1,53 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useBookingStore } from "../../stores/booking.store";
-import { Star, Send, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Star, Send, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import api from "@/lib/api";
+import type { ApiResponse } from "@sundogo/types";
 
 export default function RatingPage() {
   const navigate = useNavigate();
+  const { id: bookingId } = useParams<{ id: string }>();
   const { driverInfo, clearBooking } = useBookingStore();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [hovered, setHovered] = useState(0);
-  const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = () => {
-    if (rating === 0) return;
-    // TODO: POST /api/bookings/${id}/rating
-    setSubmitted(true);
-  };
+  // Detect an existing review for this booking.
+  const checkQuery = useQuery({
+    queryKey: ["passenger", "review-check", bookingId],
+    enabled: !!bookingId,
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<boolean>>(`/api/reviews/check/${bookingId}`);
+      return data.data ?? false;
+    },
+  });
+
+  const submitReview = useMutation({
+    mutationFn: async () => {
+      await api.post<ApiResponse<unknown>>("/api/reviews", {
+        bookingId,
+        rating,
+        comment: comment.trim() || undefined,
+      });
+    },
+  });
 
   const handleDone = () => {
     clearBooking();
-    navigate("/user/passenger/");
+    navigate("/user/passenger/", { replace: true });
   };
 
-  if (submitted) {
+  if (checkQuery.isLoading) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-white">
+        <Loader2 size={28} className="animate-spin text-primary-600" />
+      </div>
+    );
+  }
+
+  if (submitReview.isSuccess || checkQuery.data) {
     return (
       <div className="min-h-dvh bg-white flex flex-col items-center justify-center px-6 text-center">
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
@@ -32,7 +57,7 @@ export default function RatingPage() {
         <p className="text-slate-500 text-sm mb-8">Your rating helps us improve the service.</p>
         <button
           onClick={handleDone}
-          className="w-full max-w-xs h-12 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-2xl transition-colors"
+          className="press w-full max-w-xs h-12 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-2xl transition-colors"
         >
           Back to Home
         </button>
@@ -44,7 +69,7 @@ export default function RatingPage() {
     <div className="min-h-dvh bg-white flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-slate-100">
-        <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center -ml-2 rounded-full hover:bg-slate-100">
+        <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center -ml-2 rounded-full hover:bg-slate-100" aria-label="Back">
           <ArrowLeft size={20} className="text-slate-700" />
         </button>
         <h1 className="text-lg font-bold text-slate-900">Rate Your Trip</h1>
@@ -68,6 +93,7 @@ export default function RatingPage() {
               onClick={() => setRating(star)}
               onMouseEnter={() => setHovered(star)}
               onMouseLeave={() => setHovered(0)}
+              aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
               className="transition-transform active:scale-90"
             >
               <Star
@@ -97,16 +123,28 @@ export default function RatingPage() {
             className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:bg-white focus:border-primary-500 transition-colors resize-none"
           />
         </div>
+
+        {submitReview.isError && (
+          <p className="text-sm text-danger-600">
+            Could not submit your rating. Please try again.
+          </p>
+        )}
       </div>
 
       <div className="px-6 pb-8">
         <button
-          onClick={handleSubmit}
-          disabled={rating === 0}
-          className="w-full h-13 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25"
+          onClick={() => submitReview.mutate()}
+          disabled={rating === 0 || submitReview.isPending}
+          className="press w-full h-13 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25"
         >
-          <Send size={18} />
-          Submit Rating
+          {submitReview.isPending ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : (
+            <>
+              <Send size={18} />
+              Submit Rating
+            </>
+          )}
         </button>
       </div>
     </div>

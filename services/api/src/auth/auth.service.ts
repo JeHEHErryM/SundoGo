@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { hash, compare } from 'bcryptjs';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserRole } from '@sundogo/types';
 
 @Injectable()
@@ -30,7 +31,7 @@ export class AuthService {
       return null;
     }
 
-    const { passwordHash, ...result } = user;
+    const { passwordHash: _passwordHash, ...result } = user;
     return result;
   }
 
@@ -97,5 +98,35 @@ export class AuthService {
   generateToken(user: any) {
     const payload = { sub: user.id, email: user.email, role: user.role };
     return this.jwtService.sign(payload, { expiresIn: '7d' });
+  }
+
+  /** Updates the first/last name and phone on the role profile (Passenger or Driver). */
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { passenger: true, driver: true },
+    });
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const profileData = {
+      ...(dto.firstName !== undefined ? { firstName: dto.firstName } : {}),
+      ...(dto.lastName !== undefined ? { lastName: dto.lastName } : {}),
+      ...(dto.phone !== undefined ? { phone: dto.phone } : {}),
+    };
+
+    if (user.role === UserRole.DRIVER && user.driver) {
+      await this.prisma.driver.update({ where: { id: user.driver.id }, data: profileData });
+    } else if (user.passenger) {
+      await this.prisma.passenger.update({ where: { id: user.passenger.id }, data: profileData });
+    } else {
+      throw new UnauthorizedException('No profile to update');
+    }
+
+    const updated = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { passenger: true, driver: true },
+    });
+    const { passwordHash: _, ...result } = updated!;
+    return result;
   }
 }

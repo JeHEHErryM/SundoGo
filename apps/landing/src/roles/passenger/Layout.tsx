@@ -1,12 +1,13 @@
 import { useEffect } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
-import { Home, Car, Clock, User } from "lucide-react";
+import { Home, Car, Clock, User, Bell } from "lucide-react";
 import { useAuthStore } from "@/stores/auth.store";
 
 const navItems = [
   { to: "/user/passenger/", icon: Home, label: "Home" },
   { to: "/user/passenger/booking", icon: Car, label: "Book" },
   { to: "/user/passenger/history", icon: Clock, label: "History" },
+  { to: "/user/passenger/notifications", icon: Bell, label: "Alerts" },
   { to: "/user/passenger/profile", icon: User, label: "Profile" },
 ];
 

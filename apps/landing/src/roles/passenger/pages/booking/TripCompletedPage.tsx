@@ -1,24 +1,67 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useBookingStore } from "../../stores/booking.store";
-import { CheckCircle2, Star, Receipt, ChevronRight } from "lucide-react";
+import { CheckCircle2, Star, Receipt, Loader2 } from "lucide-react";
+import api from "@/lib/api";
+import type { ApiResponse } from "@sundogo/types";
+import { BookingStatus } from "@sundogo/types";
+
+interface BookingDetail {
+  id: string;
+  status: BookingStatus;
+  pickupAddress: string;
+  destinationAddress: string;
+  tripDistanceKm: string | number;
+  tripFare: string | number;
+  pickupFee: string | number;
+  platformFee: string | number;
+  totalFare: string | number;
+  driver?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+}
 
 export default function TripCompletedPage() {
   const navigate = useNavigate();
-  const { pickup, destination, fareEstimate, driverInfo, clearBooking, setBookingStatus } = useBookingStore();
+  const { currentBooking, clearBooking } = useBookingStore();
 
-  const handlePay = () => {
-    setBookingStatus("payment");
-    navigate("/user/passenger/booking/payment");
-  };
+  const { data: booking, isLoading } = useQuery({
+    queryKey: ["passenger", "booking", currentBooking],
+    enabled: !!currentBooking,
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<BookingDetail>>(`/api/bookings/${currentBooking}`);
+      return data.data!;
+    },
+  });
+
+  // Redirect home when there is nothing to show.
+  useEffect(() => {
+    if (!currentBooking) navigate("/user/passenger/", { replace: true });
+  }, [currentBooking, navigate]);
 
   const handleRate = () => {
-    navigate(`/user/passenger/booking/${driverInfo?.id || "1"}/rate`);
+    if (currentBooking) navigate(`/user/passenger/booking/${currentBooking}/rate`);
   };
 
   const handleDone = () => {
     clearBooking();
-    navigate("/user/passenger/");
+    navigate("/user/passenger/", { replace: true });
   };
+
+  if (!currentBooking || isLoading || !booking) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-slate-50">
+        <Loader2 size={28} className="animate-spin text-primary-600" />
+      </div>
+    );
+  }
+
+  const driverName = booking.driver
+    ? [booking.driver.firstName, booking.driver.lastName].filter(Boolean).join(" ")
+    : null;
 
   return (
     <div className="min-h-dvh bg-slate-50 flex flex-col">
@@ -43,11 +86,11 @@ export default function TripCompletedPage() {
             <div className="flex-1 space-y-3 min-w-0">
               <div>
                 <p className="text-[10px] text-slate-400 uppercase tracking-wide">From</p>
-                <p className="text-sm font-medium text-slate-900 truncate">{pickup?.address || "Pickup"}</p>
+                <p className="text-sm font-medium text-slate-900 truncate">{booking.pickupAddress}</p>
               </div>
               <div>
                 <p className="text-[10px] text-slate-400 uppercase tracking-wide">To</p>
-                <p className="text-sm font-medium text-slate-900 truncate">{destination?.address || "Destination"}</p>
+                <p className="text-sm font-medium text-slate-900 truncate">{booking.destinationAddress}</p>
               </div>
             </div>
           </div>
@@ -60,24 +103,35 @@ export default function TripCompletedPage() {
             <h3 className="text-sm font-semibold text-slate-900">Trip Fare</h3>
           </div>
           <div className="text-center py-2">
-            <p className="text-3xl font-bold text-slate-900">₱{(fareEstimate?.total || 0).toFixed(2)}</p>
+            <p className="text-3xl font-bold text-slate-900">₱{Number(booking.totalFare).toFixed(2)}</p>
             <p className="text-xs text-slate-400 mt-1">Cash Payment</p>
+          </div>
+          <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-xs">
+            <div className="flex justify-between text-slate-500">
+              <span>Trip Fare ({Number(booking.tripDistanceKm).toFixed(1)} km)</span>
+              <span>₱{Number(booking.tripFare).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-slate-500">
+              <span>Pickup Fee</span>
+              <span>₱{Number(booking.pickupFee).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-slate-500">
+              <span>Platform Fee</span>
+              <span>₱{Number(booking.platformFee).toFixed(2)}</span>
+            </div>
           </div>
         </div>
 
         {/* Driver info */}
-        {driverInfo && (
+        {driverName && (
           <div className="bg-white rounded-2xl p-4 border border-slate-100">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-sm font-bold text-primary-600">
-                {driverInfo.name.charAt(0)}
+                {driverName.charAt(0)}
               </div>
               <div className="flex-1">
-                <p className="text-sm font-semibold text-slate-900">{driverInfo.name}</p>
-                <div className="flex items-center gap-1">
-                  <Star size={11} className="text-amber-400" fill="currentColor" />
-                  <span className="text-xs text-slate-500">{driverInfo.rating}</span>
-                </div>
+                <p className="text-sm font-semibold text-slate-900">{driverName}</p>
+                <p className="text-xs text-slate-400">Your driver for this trip</p>
               </div>
             </div>
           </div>
@@ -87,24 +141,24 @@ export default function TripCompletedPage() {
       {/* Actions */}
       <div className="px-5 pb-8 space-y-2.5">
         <button
-          onClick={handlePay}
-          className="w-full h-12 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25"
-        >
-          Confirm Cash Payment
-          <ChevronRight size={18} />
-        </button>
-        <button
           onClick={handleRate}
-          className="w-full h-12 bg-white border border-slate-200 text-slate-700 font-semibold rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
+          className="press w-full h-12 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25"
         >
           <Star size={18} />
           Rate Driver
         </button>
         <button
+          onClick={() => navigate("/user/passenger/booking/payment")}
+          className="w-full h-12 bg-white border border-slate-200 text-slate-700 font-semibold rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
+        >
+          <Receipt size={18} />
+          View Payment Details
+        </button>
+        <button
           onClick={handleDone}
           className="w-full h-12 text-slate-500 font-medium rounded-2xl hover:bg-slate-100 transition-colors"
         >
-          Skip for now
+          Done
         </button>
       </div>
     </div>

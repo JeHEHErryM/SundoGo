@@ -22,22 +22,39 @@ export class BookingsController {
   }
 
   @Get()
-  async listOwn(@CurrentUser() user: any, @Query('page') page?: string, @Query('limit') limit?: string) {
+  async listOwn(
+    @CurrentUser() user: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+  ) {
     const p = parseInt(page ?? '1', 10);
     const l = parseInt(limit ?? '20', 10);
 
     if (user.role === UserRole.DRIVER) {
-      const data = await this.bookingsService.getDriverBookings(user.driverId, p, l);
+      const data = await this.bookingsService.getDriverBookings(user.driverId, p, l, status as any);
       return { success: true, data };
     }
-
-    const data = await this.bookingsService.getPassengerBookings(user.passengerId, p, l);
-    return { success: true, data };
+    if (user.role === UserRole.PASSENGER) {
+      const data = await this.bookingsService.getPassengerBookings(user.passengerId, p, l, status as any);
+      return { success: true, data };
+    }
+    return { success: true, data: { data: [], total: 0, page: p, limit: l, totalPages: 0 } };
   }
 
   @Get('active')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.DRIVER)
   async getActive(@CurrentUser() user: any) {
     const data = await this.bookingsService.getActiveBookingForDriver(user.driverId);
+    return { success: true, data };
+  }
+
+  @Get('offers/pending')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.DRIVER)
+  async getPendingOffer(@CurrentUser() user: any) {
+    const data = await this.bookingsService.getPendingOfferForDriver(user.driverId);
     return { success: true, data };
   }
 
@@ -62,11 +79,19 @@ export class BookingsController {
     return { success: true, data };
   }
 
+  @Post(':id/reject-offer')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.DRIVER)
+  async rejectOffer(@Param('id') id: string, @CurrentUser() user: any) {
+    const data = await this.bookingsService.rejectOffer(id, user.userId);
+    return { success: true, data };
+  }
+
   @Patch(':id/status')
   @UseGuards(RolesGuard)
   @Roles(UserRole.DRIVER)
   async updateStatus(@Param('id') id: string, @Body() dto: UpdateStatusDto, @CurrentUser() user: any) {
-    const data = await this.bookingsService.updateStatus(id, dto.status, user.id);
+    const data = await this.bookingsService.updateStatus(id, dto.status, user.id, user.driverId);
     return { success: true, data };
   }
 }

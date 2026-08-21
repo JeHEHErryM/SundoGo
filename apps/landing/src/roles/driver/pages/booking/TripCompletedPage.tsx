@@ -1,10 +1,16 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle2, MapPin, Wallet, Home } from "lucide-react";
 import { useDriverStore } from "@/stores/driver.store";
 
 export default function TripCompletedPage() {
   const navigate = useNavigate();
-  const { currentBooking, clearTrip } = useDriverStore();
+  const { currentBooking, clearTrip, clearBooking } = useDriverStore();
+
+  // Transient summary: if there's nothing to show, go home.
+  useEffect(() => {
+    if (!currentBooking) navigate("/user/driver/", { replace: true });
+  }, [currentBooking, navigate]);
 
   const fare = currentBooking?.totalFare ?? 0;
   const platformFee = currentBooking?.platformFee ?? 0;
@@ -12,9 +18,11 @@ export default function TripCompletedPage() {
 
   const handleDone = () => {
     clearTrip();
-    useDriverStore.getState().clearBooking();
+    clearBooking();
     navigate("/user/driver/", { replace: true });
   };
+
+  if (!currentBooking) return null;
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-50">

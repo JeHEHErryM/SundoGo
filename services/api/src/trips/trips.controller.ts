@@ -25,16 +25,17 @@ export class TripsController {
     @CurrentUser() user: any,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('status') status?: string,
   ) {
     const p = parseInt(page ?? '1', 10);
     const l = parseInt(limit ?? '20', 10);
 
     if (user.role === UserRole.DRIVER) {
-      const data = await this.tripsService.getDriverTrips(user.driverId, p, l);
+      const data = await this.tripsService.getDriverTrips(user.driverId, p, l, status as any);
       return { success: true, data };
     }
 
-    const data = await this.tripsService.getPassengerTrips(user.passengerId, p, l);
+    const data = await this.tripsService.getPassengerTrips(user.passengerId, p, l, status as any);
     return { success: true, data };
   }
 

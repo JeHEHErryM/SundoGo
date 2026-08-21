@@ -1,72 +1,94 @@
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Bell, Trash2 } from "lucide-react";
-
-interface Notification {
-  id: string;
-  title: string;
-  body: string;
-  time: string;
-  read: boolean;
-  type: "booking" | "promo" | "system";
-}
-
-const notifications: Notification[] = [
-  { id: "1", title: "Trip Completed", body: "Your trip to SM City Cebu is completed. Total fare: ₱75.00", time: "2h ago", read: false, type: "booking" },
-  { id: "2", title: "Promo: 50% OFF", body: "Use code SUNDogo50 on your next ride and save 50%!", time: "5h ago", read: false, type: "promo" },
-  { id: "3", title: "Driver Assigned", body: "Mang Rodel is on the way to your pickup point.", time: "Yesterday", read: true, type: "booking" },
-  { id: "4", title: "Safety Update", body: "We've added new emergency features. Check them out in your profile.", time: "2 days ago", read: true, type: "system" },
-  { id: "5", title: "Trip Receipt", body: "Your receipt for trip to Cebu IT Park is ready.", time: "3 days ago", read: true, type: "booking" },
-];
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Bell, CheckCheck } from "lucide-react";
+import api from "@/lib/api";
+import { Skeleton, EmptyState, ErrorState, timeAgo } from "@/components/shared";
+import type { ApiResponse, Notification } from "@sundogo/types";
 
 export default function NotificationsPage() {
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const typeColors: Record<string, string> = {
-    booking: "bg-primary-100 text-primary-600",
-    promo: "bg-amber-100 text-amber-600",
-    system: "bg-slate-100 text-slate-600",
-  };
+  const { data: notifications, isLoading, isError, refetch } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<{ data: Notification[]; total: number }>>("/api/notifications");
+      return data.data?.data ?? [];
+    },
+  });
+
+  const readAllMutation = useMutation({
+    mutationFn: async () => {
+      await api.patch("/api/notifications/read-all");
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  const unreadExists = notifications?.some((n) => !n.read);
 
   return (
     <div className="min-h-dvh bg-slate-50">
       {/* Header */}
-      <div className="bg-white px-4 pt-4 pb-3 border-b border-slate-100 flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center -ml-2 rounded-full hover:bg-slate-100">
-          <ArrowLeft size={20} className="text-slate-700" />
-        </button>
+      <div className="flex items-center gap-3 border-b border-slate-100 bg-white px-4 pb-3 pt-4">
         <div className="flex-1">
           <h1 className="text-lg font-bold text-slate-900">Notifications</h1>
         </div>
-        <button className="text-xs text-primary-600 font-medium">Mark all read</button>
+        {unreadExists && (
+          <button
+            onClick={() => readAllMutation.mutate()}
+            disabled={readAllMutation.isPending}
+            className="flex items-center gap-1 text-xs font-medium text-primary-600 disabled:opacity-50"
+          >
+            <CheckCheck size={14} />
+            Mark all read
+          </button>
+        )}
       </div>
 
       {/* Notification list */}
-      <div className="px-5 py-3 space-y-2 pb-8">
-        {notifications.map((notif) => (
-          <div
-            key={notif.id}
-            className={`bg-white rounded-2xl p-4 border border-slate-100 ${
-              !notif.read ? "ring-1 ring-primary-100" : ""
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${typeColors[notif.type]}`}>
-                <Bell size={16} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="text-sm font-semibold text-slate-900">{notif.title}</p>
-                  {!notif.read && <div className="w-2 h-2 bg-primary-500 rounded-full shrink-0" />}
-                </div>
-                <p className="text-xs text-slate-500 leading-relaxed">{notif.body}</p>
-                <p className="text-[11px] text-slate-400 mt-1.5">{notif.time}</p>
-              </div>
-              <button className="p-1 text-slate-300 hover:text-slate-500 shrink-0">
-                <Trash2 size={14} />
-              </button>
-            </div>
+      <div className="safe-area-pb space-y-2 px-5 pb-8 pt-3">
+        {isError ? (
+          <div className="rounded-2xl bg-white shadow-sm">
+            <ErrorState message="Could not load notifications." onRetry={() => refetch()} />
           </div>
-        ))}
+        ) : isLoading ? (
+          Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-2xl" />)
+        ) : (notifications ?? []).length === 0 ? (
+          <div className="rounded-2xl bg-white shadow-sm">
+            <EmptyState
+              illustration="notifications"
+              title="No notifications yet"
+              description="Booking updates and driver alerts will appear here."
+            />
+          </div>
+        ) : (
+          notifications!.map((notif) => (
+            <div
+              key={notif.id}
+              className={`rounded-2xl border border-slate-100 bg-white p-4 ${
+                !notif.read ? "ring-1 ring-primary-100" : ""
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                    !notif.read ? "bg-primary-100 text-primary-600" : "bg-slate-100 text-slate-400"
+                  }`}
+                >
+                  <Bell size={16} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-0.5 flex items-center gap-2">
+                    <p className="text-sm font-semibold text-slate-900">{notif.title}</p>
+                    {!notif.read && <div className="h-2 w-2 shrink-0 rounded-full bg-primary-500" />}
+                  </div>
+                  <p className="text-xs leading-relaxed text-slate-500">{notif.body}</p>
+                  <p className="mt-1.5 text-[11px] text-slate-400">{timeAgo(notif.createdAt)}</p>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

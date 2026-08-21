@@ -26,6 +26,15 @@ export class DriversController {
     return { success: true, data: driver };
   }
 
+  @Get('dashboard')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.DRIVER)
+  async getDashboard(@CurrentUser() user: any) {
+    const driver = await this.driversService.findByUserId(user.userId);
+    const stats = await this.driversService.getDashboard(driver.id);
+    return { success: true, data: stats };
+  }
+
   @Patch('profile')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.DRIVER)

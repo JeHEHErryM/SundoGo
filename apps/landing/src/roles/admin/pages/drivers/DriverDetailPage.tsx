@@ -1,222 +1,366 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Phone, Mail, Star, CheckCircle, XCircle, Car } from "lucide-react";
-import StatusBadge, { getStatusVariant } from "../../components/StatusBadge";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  ArrowLeft,
+  Phone,
+  Mail,
+  Star,
+  CheckCircle,
+  XCircle,
+  Car,
+  FileText,
+  CalendarDays,
+} from "lucide-react";
+import api from "@/lib/api";
+import type { ApiResponse } from "@sundogo/types";
+import PageHeader from "@/components/shared/PageHeader";
+import Badge from "@/components/shared/Badge";
+import Avatar from "@/components/shared/Avatar";
+import Sheet from "@/components/shared/Sheet";
+import Button from "@/components/shared/Button";
+import { Skeleton } from "@/components/shared/Skeleton";
+import ErrorState from "@/components/shared/ErrorState";
+import EmptyState from "@/components/shared/EmptyState";
+import { useToast } from "@/components/shared";
+import { formatCurrency, formatDate, fullName } from "@/components/shared";
 
-const driverData: Record<string, {
-  name: string;
-  email: string;
+interface AdminDriverDetail {
+  id: string;
+  firstName: string;
+  lastName: string;
   phone: string;
-  verification_status: string;
-  status: string;
-  rating: number;
-  total_trips: number;
-  joined: string;
-  vehicle: { make: string; model: string; plate: string; year: number };
-  documents: { type: string; status: string }[];
-  recentTrips: { id: string; date: string; pickup: string; destination: string; fare: number; rating: number }[];
-  reviews: { id: string; passenger: string; rating: number; comment: string; date: string }[];
-}> = {
-  D001: {
-    name: "James Mwangi",
-    email: "james@email.com",
-    phone: "+254700100100",
-    verification_status: "verified",
-    status: "active",
-    rating: 4.8,
-    total_trips: 342,
-    joined: "2024-03-15",
-    vehicle: { make: "Toyota", model: "Corolla", plate: "KAA 123B", year: 2021 },
-    documents: [
-      { type: "Driver's License", status: "approved" },
-      { type: "Vehicle Registration", status: "approved" },
-      { type: "Insurance Certificate", status: "approved" },
-      { type: "National ID", status: "approved" },
-    ],
-    recentTrips: [
-      { id: "T001", date: "2026-08-19", pickup: "Westlands Mall", destination: "JKIA Terminal 1", fare: 1850, rating: 5 },
-      { id: "T002", date: "2026-08-19", pickup: "CBD Town", destination: "Karen Hospital", fare: 1200, rating: 4 },
-      { id: "T003", date: "2026-08-18", pickup: "Kiambu Road", destination: "Two Rivers Mall", fare: 650, rating: 5 },
-    ],
-    reviews: [
-      { id: "R001", passenger: "Alice N.", rating: 5, comment: "Very professional and clean car", date: "2026-08-19" },
-      { id: "R002", passenger: "Mike O.", rating: 4, comment: "Good drive, a bit slow", date: "2026-08-18" },
-    ],
-  },
-};
+  user: { email: string; createdAt: string };
+  verification: {
+    id: string;
+    status: string;
+    idImageUrl?: string;
+    licenseImageUrl?: string;
+    orcrImageUrl?: string;
+    notes?: string;
+    reviewedAt?: string;
+  } | null;
+  vehicle: { plateNumber: string; model: string; color: string } | null;
+  availability: { status: string } | null;
+  trips: Array<{
+    id: string;
+    status: string;
+    completedAt?: string;
+    booking: { pickupAddress?: string; destinationAddress?: string; totalFare: number };
+  }>;
+  reviews: Array<{ id: string; rating: number; comment?: string; createdAt: string }>;
+}
 
-const defaultDriver = {
-  name: "Driver Not Found",
-  email: "",
-  phone: "",
-  verification_status: "pending_verification",
-  status: "inactive",
-  rating: 0,
-  total_trips: 0,
-  joined: "",
-  vehicle: { make: "", model: "", plate: "", year: 0 },
-  documents: [],
-  recentTrips: [],
-  reviews: [],
-};
+function Stars({ rating }: { rating: number }) {
+  return (
+    <div className="flex items-center gap-0.5" aria-label={`${rating} out of 5 stars`}>
+      {Array.from({ length: 5 }, (_, i) => (
+        <Star
+          key={i}
+          size={13}
+          className={i < Math.round(rating) ? "fill-accent-400 text-accent-400" : "text-slate-200"}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function DriverDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const driver = driverData[id || ""] || { ...defaultDriver, name: `Driver ${id}` };
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectNotes, setRejectNotes] = useState("");
+
+  const { data: driver, isLoading, isError, refetch } = useQuery({
+    queryKey: ["admin", "driver", id],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<AdminDriverDetail>>(`/api/admin/drivers/${id}`);
+      return data.data!;
+    },
+    enabled: !!id,
+  });
+
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: ["admin", "driver", id] });
+    void queryClient.invalidateQueries({ queryKey: ["admin", "drivers"] });
+    void queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
+  };
+
+  const approve = useMutation({
+    mutationFn: async () => {
+      if (!driver?.verification) throw new Error("No verification submitted");
+      await api.patch(`/api/driver-verification/${driver.verification.id}/approve`);
+    },
+    onSuccess: () => {
+      toast("success", "Driver approved");
+      invalidate();
+    },
+    onError: () => toast("error", "Failed to approve driver"),
+  });
+
+  const reject = useMutation({
+    mutationFn: async (notes: string) => {
+      if (!driver?.verification) throw new Error("No verification submitted");
+      await api.patch(`/api/driver-verification/${driver.verification.id}/reject`, { notes });
+    },
+    onSuccess: () => {
+      toast("success", "Verification rejected");
+      setRejectOpen(false);
+      setRejectNotes("");
+      invalidate();
+    },
+    onError: () => toast("error", "Failed to reject verification"),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-9 w-64" />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-72 rounded-2xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || !driver) {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-white">
+        <ErrorState title="Driver not found" message="This driver may have been removed." onRetry={() => refetch()} />
+      </div>
+    );
+  }
+
+  const name = fullName(driver);
+  const avgRating =
+    driver.reviews.length > 0
+      ? driver.reviews.reduce((s, r) => s + r.rating, 0) / driver.reviews.length
+      : null;
+
+  const documents = [
+    { label: "National ID", url: driver.verification?.idImageUrl },
+    { label: "Driver's License", url: driver.verification?.licenseImageUrl },
+    { label: "OR/CR", url: driver.verification?.orcrImageUrl },
+  ].filter((d) => !!d.url);
+
+  const isPending = driver.verification?.status === "PENDING";
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="p-2 rounded-lg hover:bg-slate-100">
-          <ArrowLeft size={20} />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">{driver.name}</h1>
-          <p className="text-sm text-slate-500">Driver ID: {id}</p>
-        </div>
-        <div className="ml-auto flex gap-2">
-          {driver.verification_status === "pending_verification" && (
-            <>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 transition-colors">
-                <CheckCircle size={16} />
-                Approve
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors">
-                <XCircle size={16} />
-                Reject
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+      <button
+        onClick={() => navigate("/user/admin/drivers")}
+        className="press inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-800"
+      >
+        <ArrowLeft size={16} />
+        Back to drivers
+      </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Card */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-2xl font-bold">
-              {driver.name.charAt(0)}
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">{driver.name}</h3>
-              <StatusBadge
-                label={driver.status}
-                variant={getStatusVariant(driver.status)}
-              />
+      <PageHeader
+        title={name}
+        description={`Driver since ${formatDate(driver.user.createdAt)}`}
+        actions={
+          <>
+            {isPending && (
+              <>
+                <Button
+                  variant="success"
+                  onClick={() => approve.mutate()}
+                  loading={approve.isPending}
+                >
+                  <CheckCircle size={16} />
+                  Approve
+                </Button>
+                <Button variant="danger" onClick={() => setRejectOpen(true)}>
+                  <XCircle size={16} />
+                  Reject
+                </Button>
+              </>
+            )}
+            {!isPending && (
+              <Badge label={driver.verification?.status ?? "PENDING"} />
+            )}
+          </>
+        }
+      />
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Profile */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+          <div className="mb-5 flex items-center gap-4">
+            <Avatar name={name} size="xl" />
+            <div className="min-w-0">
+              <h2 className="truncate text-lg font-bold text-slate-900">{name}</h2>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                <Badge label={driver.availability?.status ?? "OFFLINE"} size="sm" />
+              </div>
             </div>
           </div>
 
-          <div className="space-y-3 text-sm">
+          <dl className="space-y-3 text-sm">
             <div className="flex items-center gap-3 text-slate-600">
-              <Mail size={16} className="text-slate-400" />
-              {driver.email || "—"}
-            </div>
-            <div className="flex items-center gap-3 text-slate-600">
-              <Phone size={16} className="text-slate-400" />
-              {driver.phone || "—"}
+              <Mail size={15} className="shrink-0 text-slate-400" />
+              <dd className="truncate">{driver.user.email}</dd>
             </div>
             <div className="flex items-center gap-3 text-slate-600">
-              <Star size={16} className="text-amber-400" />
-              {driver.rating > 0 ? `${driver.rating} / 5.0` : "No ratings"} · {driver.total_trips} trips
+              <Phone size={15} className="shrink-0 text-slate-400" />
+              <dd>{driver.phone || "—"}</dd>
             </div>
-            <div className="pt-3 border-t border-slate-100 text-xs text-slate-400">
-              Joined {driver.joined || "—"}
+            <div className="flex items-center gap-3 text-slate-600">
+              <Star size={15} className="shrink-0 text-accent-400" />
+              <dd>
+                {avgRating ? `${avgRating.toFixed(1)} / 5.0` : "No ratings yet"}
+                <span className="text-slate-400"> · {driver.trips.length} recent trips</span>
+              </dd>
             </div>
-          </div>
-        </div>
+            <div className="flex items-center gap-3 border-t border-slate-100 pt-3 text-xs text-slate-400">
+              <CalendarDays size={14} className="shrink-0" />
+              <dd>Joined {formatDate(driver.user.createdAt)}</dd>
+            </div>
+          </dl>
+        </section>
 
-        {/* Vehicle & Documents */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <Car size={16} />
+        {/* Vehicle + Documents */}
+        <section className="space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+            <h3 className="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <Car size={14} />
               Vehicle Information
             </h3>
-            {driver.vehicle.make ? (
-              <div className="space-y-2 text-sm">
-                <p className="text-slate-700"><span className="text-slate-500">Make:</span> {driver.vehicle.make}</p>
-                <p className="text-slate-700"><span className="text-slate-500">Model:</span> {driver.vehicle.model}</p>
-                <p className="text-slate-700"><span className="text-slate-500">Year:</span> {driver.vehicle.year}</p>
-                <p className="text-slate-700"><span className="text-slate-500">Plate:</span> <span className="font-mono font-medium">{driver.vehicle.plate}</span></p>
+            {driver.vehicle ? (
+              <div className="space-y-2.5 text-sm">
+                <p className="flex justify-between text-slate-600">
+                  <span>Model</span> <span className="font-medium text-slate-800">{driver.vehicle.model}</span>
+                </p>
+                <p className="flex justify-between text-slate-600">
+                  <span>Color</span> <span className="font-medium text-slate-800">{driver.vehicle.color}</span>
+                </p>
+                <p className="flex justify-between text-slate-600">
+                  <span>Plate</span>
+                  <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono font-bold text-slate-800">
+                    {driver.vehicle.plateNumber}
+                  </span>
+                </p>
               </div>
             ) : (
-              <p className="text-sm text-slate-400">No vehicle information</p>
+              <p className="text-sm text-slate-400">No vehicle registered</p>
             )}
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4">Documents</h3>
-            {driver.documents.length > 0 ? (
-              <div className="space-y-2">
-                {driver.documents.map((doc, i) => (
-                  <div key={i} className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50">
-                    <span className="text-sm text-slate-700">{doc.type}</span>
-                    <StatusBadge label={doc.status} variant={getStatusVariant(doc.status)} />
-                  </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+            <h3 className="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <FileText size={14} />
+              Documents
+            </h3>
+            {documents.length > 0 ? (
+              <ul className="space-y-2">
+                {documents.map((doc) => (
+                  <li key={doc.label}>
+                    <a
+                      href={doc.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group flex items-center justify-between rounded-xl bg-slate-50 px-3.5 py-2.5 transition-colors hover:bg-primary-50"
+                    >
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-primary-700">
+                        {doc.label}
+                      </span>
+                      <span className="text-xs font-semibold text-primary-600">View</span>
+                    </a>
+                  </li>
                 ))}
-              </div>
+              </ul>
             ) : (
               <p className="text-sm text-slate-400">No documents uploaded</p>
             )}
+            {driver.verification?.notes && (
+              <p className="mt-3 rounded-xl bg-danger-50 px-3.5 py-2.5 text-xs text-danger-700">
+                Notes: {driver.verification.notes}
+              </p>
+            )}
           </div>
-        </div>
+        </section>
 
-        {/* Recent Trips */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4">Recent Trips</h3>
-          {driver.recentTrips.length > 0 ? (
-            <div className="space-y-3">
-              {driver.recentTrips.map((trip) => (
-                <div key={trip.id} className="p-3 rounded-lg bg-slate-50">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-slate-900">{trip.date}</span>
-                    <span className="text-slate-700">KES {trip.fare.toLocaleString()}</span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">{trip.pickup} → {trip.destination}</p>
-                  <div className="flex items-center gap-0.5 mt-1">
-                    {Array.from({ length: 5 }, (_, i) => (
-                      <Star
-                        key={i}
-                        size={12}
-                        className={i < trip.rating ? "text-amber-400 fill-amber-400" : "text-slate-200"}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* Recent trips */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+          <h3 className="mb-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Recent Trips</h3>
+          {driver.trips.length === 0 ? (
+            <EmptyState illustration="trips" title="No trips yet" description="Completed trips will appear here." />
           ) : (
-            <p className="text-sm text-slate-400">No trips yet</p>
+            <ul className="space-y-3">
+              {driver.trips.map((trip) => (
+                <li key={trip.id} className="rounded-xl bg-slate-50 p-3.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-slate-700">{formatDate(trip.completedAt)}</span>
+                    <span className="font-bold text-slate-900">{formatCurrency(trip.booking.totalFare)}</span>
+                  </div>
+                  <p className="mt-1 truncate text-xs text-slate-500">
+                    {trip.booking.pickupAddress ?? "Pickup"} → {trip.booking.destinationAddress ?? "Destination"}
+                  </p>
+                </li>
+              ))}
+            </ul>
           )}
-        </div>
+        </section>
       </div>
 
       {/* Reviews */}
       {driver.reviews.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4">Reviews</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+          <h3 className="mb-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            Passenger Reviews ({driver.reviews.length})
+          </h3>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {driver.reviews.map((review) => (
-              <div key={review.id} className="p-4 rounded-lg bg-slate-50 border border-slate-100">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-slate-900">{review.passenger}</span>
-                  <div className="flex items-center gap-0.5">
-                    {Array.from({ length: 5 }, (_, i) => (
-                      <Star
-                        key={i}
-                        size={12}
-                        className={i < review.rating ? "text-amber-400 fill-amber-400" : "text-slate-200"}
-                      />
-                    ))}
-                  </div>
+              <article key={review.id} className="rounded-xl border border-slate-100 bg-slate-50/60 p-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <Stars rating={review.rating} />
+                  <span className="text-xs text-slate-400">{formatDate(review.createdAt)}</span>
                 </div>
-                <p className="text-sm text-slate-600">{review.comment}</p>
-                <p className="text-xs text-slate-400 mt-2">{review.date}</p>
-              </div>
+                <p className="text-sm text-slate-600">{review.comment || "No comment provided."}</p>
+              </article>
             ))}
           </div>
-        </div>
+        </section>
       )}
+
+      {/* Reject modal */}
+      <Sheet open={rejectOpen} onClose={() => setRejectOpen(false)} title="Reject Verification">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Reject the verification for <strong>{name}</strong>? The driver will need to resubmit documents.
+          </p>
+          <div>
+            <label htmlFor="reject-notes" className="mb-1.5 block text-sm font-medium text-slate-700">
+              Reason / Notes
+            </label>
+            <textarea
+              id="reject-notes"
+              value={rejectNotes}
+              onChange={(e) => setRejectNotes(e.target.value)}
+              rows={3}
+              placeholder="Explain why this verification is being rejected…"
+              className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm placeholder:text-slate-400 focus:border-primary-500 focus:outline-none"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button variant="secondary" onClick={() => setRejectOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => reject.mutate(rejectNotes)}
+              loading={reject.isPending}
+              disabled={!rejectNotes.trim()}
+            >
+              Reject Verification
+            </Button>
+          </div>
+        </div>
+      </Sheet>
     </div>
   );
 }

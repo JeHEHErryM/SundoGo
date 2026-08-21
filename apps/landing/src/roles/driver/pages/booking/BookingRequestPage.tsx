@@ -1,78 +1,108 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Clock, User, Phone, Check, X } from "lucide-react";
 import api from "@/lib/api";
+import { getSocket, BOOKING_EVENTS } from "@/lib/socket";
 import { useDriverStore } from "@/stores/driver.store";
 import { BookingStatus } from "@sundogo/types";
-import type { ApiResponse } from "@sundogo/types";
+import type { ApiResponse, Booking } from "@sundogo/types";
 
-const COUNTDOWN = 15;
+const COUNTDOWN = 30;
 
-const DEMO_BOOKING = {
-  id: "demo-1",
-  passengerId: "p1",
-  serviceAreaId: "sa-1",
-  status: BookingStatus.REQUESTED,
-  pickupLat: 14.5995,
-  pickupLng: 120.9842,
-  pickupAddress: "Rizal Park, Manila",
-  destinationLat: 14.5547,
-  destinationLng: 121.05,
-  destinationAddress: "SM Makati",
-  tripDistanceKm: 5.2,
-  pickupDistanceKm: 1.3,
-  tripFare: 85,
-  pickupFee: 15,
-  platformFee: 10,
-  totalFare: 110,
-  createdAt: new Date(),
-  updatedAt: new Date(),
+type OfferBooking = Booking & {
+  passenger?: { firstName: string; lastName: string; phone: string } | null;
 };
 
 export default function BookingRequestPage() {
   const navigate = useNavigate();
-  const { currentBooking, acceptBooking, clearBooking } = useDriverStore();
+  const queryClient = useQueryClient();
+  const acceptBooking = useDriverStore((s) => s.acceptBooking);
+  const setPendingOffer = useDriverStore((s) => s.setPendingOffer);
   const [timeLeft, setTimeLeft] = useState(COUNTDOWN);
 
-  const booking = currentBooking ?? DEMO_BOOKING;
+  // Poll as a fallback in case the socket push was missed.
+  const { data: offer, isLoading } = useQuery({
+    queryKey: ["driver", "pending-offer"],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<OfferBooking | null>>("/api/bookings/offers/pending");
+      return data.data ?? null;
+    },
+    refetchInterval: 5000,
+  });
 
+  // Live refresh when a new offer is pushed.
   useEffect(() => {
-    if (timeLeft <= 0) {
-      clearBooking();
-      navigate("/user/driver/", { replace: true });
-      return;
-    }
-    const t = setTimeout(() => setTimeLeft((p) => p - 1), 1000);
-    return () => clearTimeout(t);
-  }, [timeLeft, clearBooking, navigate]);
+    const socket = getSocket();
+    const onOffer = () => {
+      void queryClient.invalidateQueries({ queryKey: ["driver", "pending-offer"] });
+      setTimeLeft(COUNTDOWN);
+    };
+    socket.on(BOOKING_EVENTS.OFFER, onOffer);
+    return () => {
+      socket.off(BOOKING_EVENTS.OFFER, onOffer);
+    };
+  }, [queryClient]);
 
-  const acceptMutation = useMutation({
-    mutationFn: async () => {
-      const { data } = await api.post<ApiResponse>("/api/bookings/accept", { bookingId: booking.id });
-      return data;
+  // Keep store in sync so Home shows the active-booking card.
+  useEffect(() => {
+    setPendingOffer(offer ?? null);
+  }, [offer, setPendingOffer]);
+
+  const reject = useMutation({
+    mutationFn: async (bookingId: string) => {
+      await api.post(`/api/bookings/${bookingId}/reject-offer`);
     },
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["driver", "pending-offer"] });
+      setTimeLeft(COUNTDOWN);
+    },
+  });
+
+  const accept = useMutation({
+    mutationFn: async (bookingId: string) => {
+      const { data } = await api.patch<ApiResponse<OfferBooking>>(`/api/bookings/${bookingId}/status`, {
+        status: BookingStatus.ACCEPTED,
+      });
+      return data.data!;
+    },
+    onSuccess: (booking) => {
       acceptBooking(booking);
       navigate("/user/driver/booking/navigate", { replace: true });
     },
   });
 
-  const rejectMutation = useMutation({
-    mutationFn: async () => {
-      await api.post("/api/bookings/reject", { bookingId: booking.id });
-    },
-    onSuccess: () => {
-      clearBooking();
+  // Auto-decline when the countdown expires.
+  useEffect(() => {
+    if (!offer) return;
+    if (timeLeft <= 0) {
+      if (!reject.isPending) reject.mutate(offer.id);
+      return;
+    }
+    const t = setTimeout(() => setTimeLeft((p) => p - 1), 1000);
+    return () => clearTimeout(t);
+  }, [timeLeft, offer]);
+
+  // No pending offer → back home.
+  useEffect(() => {
+    if (!isLoading && !offer && !accept.isPending) {
       navigate("/user/driver/", { replace: true });
-    },
-  });
+    }
+  }, [isLoading, offer, accept.isPending, navigate]);
+
+  if (isLoading || !offer) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
+      </div>
+    );
+  }
 
   const timerPct = (timeLeft / COUNTDOWN) * 100;
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-50">
-      <div className="bg-gradient-to-br from-primary-700 to-primary-900 px-5 pt-12 pb-20 text-white">
+      <div className="bg-gradient-to-br from-primary-700 to-primary-900 px-5 pb-20 pt-10 text-white">
         <div className="flex items-center gap-2">
           <Clock className="h-5 w-5" />
           <h1 className="text-xl font-bold">New Booking Request</h1>
@@ -103,7 +133,7 @@ export default function BookingRequestPage() {
         </div>
       </div>
 
-      <div className="mx-auto -mt-12 w-full max-w-lg space-y-4 px-4 pb-6">
+      <div className="safe-area-pb mx-auto -mt-12 w-full max-w-lg space-y-4 px-4 pb-6">
         {/* Booking Card */}
         <div className="rounded-2xl bg-white p-5 shadow-lg">
           <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
@@ -111,12 +141,15 @@ export default function BookingRequestPage() {
               <User className="h-6 w-6" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-gray-800">Passenger</p>
-              <p className="text-sm text-gray-500">Rating: 4.8 ⭐</p>
+              <p className="font-semibold text-gray-800">
+                {[offer.passenger?.firstName, offer.passenger?.lastName].filter(Boolean).join(" ") || "Passenger"}
+              </p>
+              {offer.passenger?.phone && (
+                <a href={`tel:${offer.passenger.phone}`} className="flex items-center gap-1 text-sm text-gray-500">
+                  <Phone size={11} /> {offer.passenger.phone}
+                </a>
+              )}
             </div>
-            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600">
-              <Phone className="h-5 w-5" />
-            </button>
           </div>
 
           <div className="space-y-3 py-4">
@@ -124,15 +157,15 @@ export default function BookingRequestPage() {
               <div className="mt-1 h-3 w-3 rounded-full bg-success-500" />
               <div>
                 <p className="text-xs font-medium text-gray-400">Pickup</p>
-                <p className="text-sm font-medium text-gray-800">{booking.pickupAddress ?? "Unknown location"}</p>
+                <p className="text-sm font-medium text-gray-800">{offer.pickupAddress ?? "Unknown location"}</p>
               </div>
             </div>
-            <div className="ml-1.5 border-l-2 border-dashed border-gray-200 h-4" />
+            <div className="ml-1.5 h-4 border-l-2 border-dashed border-gray-200" />
             <div className="flex items-start gap-3">
               <div className="mt-1 h-3 w-3 rounded-full bg-danger-500" />
               <div>
                 <p className="text-xs font-medium text-gray-400">Destination</p>
-                <p className="text-sm font-medium text-gray-800">{booking.destinationAddress ?? "Unknown destination"}</p>
+                <p className="text-sm font-medium text-gray-800">{offer.destinationAddress ?? "Unknown destination"}</p>
               </div>
             </div>
           </div>
@@ -140,28 +173,37 @@ export default function BookingRequestPage() {
           <div className="grid grid-cols-2 gap-3 border-t border-gray-100 pt-4">
             <div className="rounded-xl bg-gray-50 p-3 text-center">
               <p className="text-xs text-gray-400">Distance to Pickup</p>
-              <p className="text-lg font-bold text-primary-600">{booking.pickupDistanceKm ?? "—"} km</p>
+              <p className="text-lg font-bold text-primary-600">
+                {offer.pickupDistanceKm != null ? `${Number(offer.pickupDistanceKm).toFixed(1)} km` : "—"}
+              </p>
             </div>
             <div className="rounded-xl bg-success-50 p-3 text-center">
               <p className="text-xs text-gray-400">Estimated Fare</p>
-              <p className="text-lg font-bold text-success-600">₱{booking.totalFare.toFixed(0)}</p>
+              <p className="text-lg font-bold text-success-600">₱{Number(offer.totalFare).toFixed(0)}</p>
             </div>
           </div>
         </div>
 
+        {accept.isError && (
+          <p className="rounded-xl bg-danger-50 px-4 py-3 text-center text-sm text-danger-700">
+            Could not accept — the booking may have been taken. Looking for the next one…
+          </p>
+        )}
+
         {/* Action Buttons */}
         <div className="flex gap-3">
           <button
-            onClick={() => rejectMutation.mutate()}
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-danger-200 bg-danger-50 py-4 text-base font-semibold text-danger-600 transition-all hover:bg-danger-100 active:scale-[0.98]"
+            onClick={() => reject.mutate(offer.id)}
+            disabled={reject.isPending}
+            className="press flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-danger-200 bg-danger-50 py-4 text-base font-semibold text-danger-600 transition-all hover:bg-danger-100 disabled:opacity-60"
           >
             <X className="h-5 w-5" />
             Reject
           </button>
           <button
-            onClick={() => acceptMutation.mutate()}
-            disabled={acceptMutation.isPending}
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-success-500 py-4 text-base font-semibold text-white shadow-lg shadow-success-500/25 transition-all hover:bg-success-600 active:scale-[0.98]"
+            onClick={() => accept.mutate(offer.id)}
+            disabled={accept.isPending}
+            className="press flex flex-1 items-center justify-center gap-2 rounded-2xl bg-success-500 py-4 text-base font-semibold text-white shadow-lg shadow-success-500/25 transition-all hover:bg-success-600 disabled:opacity-60"
           >
             <Check className="h-5 w-5" />
             Accept

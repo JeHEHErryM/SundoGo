@@ -1,95 +1,193 @@
-import { ChevronRight, Star, CheckCircle2, XCircle } from "lucide-react";
+import { useState } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { ChevronRight, CheckCircle2, XCircle, ChevronLeft } from "lucide-react";
+import api from "@/lib/api";
+import { Skeleton, EmptyState, ErrorState, formatDateTime, formatCurrency, fullName } from "@/components/shared";
+import type { ApiResponse } from "@sundogo/types";
+import { BookingStatus } from "@sundogo/types";
 
-interface Trip {
+interface HistoryBooking {
   id: string;
-  from: string;
-  to: string;
-  date: string;
-  fare: number;
-  status: "completed" | "cancelled";
-  rating?: number;
+  status: BookingStatus;
+  pickupAddress: string;
+  destinationAddress: string;
+  totalFare: string;
+  createdAt: string;
+  driver?: { firstName: string; lastName: string } | null;
 }
 
-const trips: Trip[] = [
-  { id: "1", from: "SM City Cebu", to: "Cebu IT Park", date: "Today, 2:30 PM", fare: 75, status: "completed", rating: 5 },
-  { id: "2", from: "Carbon Market", to: "Fuente Osmeña Circle", date: "Yesterday, 10:15 AM", fare: 45, status: "completed", rating: 4 },
-  { id: "3", from: "Cebu Business Park", to: "Mactan Airport", date: "Aug 18, 6:00 AM", fare: 250, status: "completed", rating: 5 },
-  { id: "4", from: "Lahug", to: "Busay", date: "Aug 17, 3:45 PM", fare: 0, status: "cancelled" },
-  { id: "5", from: "Colon Street", to: "Taboan Public Market", date: "Aug 15, 9:00 AM", fare: 35, status: "completed", rating: 3 },
+const FILTERS = [
+  { value: "", label: "All" },
+  { value: BookingStatus.COMPLETED, label: "Completed" },
+  { value: BookingStatus.CANCELLED, label: "Cancelled" },
 ];
 
 export default function TripHistoryPage() {
+  const navigate = useNavigate();
+  const [filter, setFilter] = useState("");
+  const [page, setPage] = useState(1);
+
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ["passenger", "bookings", page, filter],
+    queryFn: async () => {
+      const params = new URLSearchParams({ page: String(page), limit: "10" });
+      if (filter) params.set("status", filter);
+      const { data } = await api.get<
+        ApiResponse<{ data: HistoryBooking[]; total: number; totalPages: number }>
+      >(`/api/bookings?${params.toString()}`);
+      return data.data!;
+    },
+    placeholderData: keepPreviousData,
+  });
+
+  const bookings = data?.data ?? [];
+  const totalPages = data?.totalPages ?? 1;
 
   return (
     <div className="min-h-dvh bg-slate-50">
       {/* Header */}
-      <div className="bg-white px-5 pt-5 pb-4 border-b border-slate-100">
+      <div className="border-b border-slate-100 bg-white px-5 pb-4 pt-5">
         <h1 className="text-xl font-bold text-slate-900">Trip History</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Your recent rides</p>
+        <p className="mt-0.5 text-sm text-slate-500">Your recent rides</p>
       </div>
 
       {/* Filters */}
-      <div className="px-5 py-3 flex gap-2 overflow-x-auto">
-        {["All", "Completed", "Cancelled"].map((filter) => (
+      <div className="flex gap-2 overflow-x-auto px-5 py-3">
+        {FILTERS.map((f) => (
           <button
-            key={filter}
-            className="px-4 py-1.5 text-sm font-medium rounded-full whitespace-nowrap bg-primary-600 text-white"
+            key={f.value}
+            onClick={() => {
+              setFilter(f.value);
+              setPage(1);
+            }}
+            className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              filter === f.value ? "bg-primary-600 text-white" : "bg-white text-slate-500 shadow-sm hover:text-slate-700"
+            }`}
           >
-            {filter}
+            {f.label}
           </button>
         ))}
       </div>
 
       {/* Trip list */}
-      <div className="px-5 py-2 space-y-3 pb-8">
-        {trips.map((trip) => (
-          <button
-            key={trip.id}
-            className="w-full bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-left hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-2">
-                {trip.status === "completed" ? (
-                  <CheckCircle2 size={16} className="text-green-500" />
-                ) : (
-                  <XCircle size={16} className="text-red-400" />
-                )}
-                <span className={`text-xs font-medium ${trip.status === "completed" ? "text-green-600" : "text-red-500"}`}>
-                  {trip.status === "completed" ? "Completed" : "Cancelled"}
-                </span>
-              </div>
-              <span className="text-xs text-slate-400">{trip.date}</span>
-            </div>
-
-            <div className="flex items-start gap-2.5">
-              <div className="flex flex-col items-center gap-0.5 mt-0.5">
-                <div className="w-2 h-2 rounded-full bg-primary-500" />
-                <div className="w-0.5 h-4 bg-slate-200" />
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-900 truncate">{trip.from}</p>
-                <div className="h-2" />
-                <p className="text-sm font-medium text-slate-900 truncate">{trip.to}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-50">
-              <div className="flex items-center gap-3">
-                {trip.fare > 0 && (
-                  <span className="text-sm font-bold text-slate-900">₱{trip.fare.toFixed(2)}</span>
-                )}
-                {trip.rating && (
-                  <div className="flex items-center gap-0.5">
-                    <Star size={12} className="text-amber-400" fill="currentColor" />
-                    <span className="text-xs text-slate-500">{trip.rating}</span>
+      <div className="safe-area-pb space-y-3 px-5 pb-8 pt-2">
+        {isError ? (
+          <div className="rounded-2xl bg-white shadow-sm">
+            <ErrorState message="Could not load your trips." onRetry={() => refetch()} />
+          </div>
+        ) : isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-36 rounded-2xl" />)
+        ) : bookings.length === 0 ? (
+          <div className="rounded-2xl bg-white shadow-sm">
+            <EmptyState
+              illustration="trips"
+              title={filter ? `No ${FILTERS.find((f) => f.value === filter)?.label.toLowerCase()} trips` : "No trips yet"}
+              description={
+                filter
+                  ? "Try a different filter."
+                  : "Book your first ride and your history will show up here."
+              }
+              action={
+                !filter && (
+                  <button
+                    onClick={() => navigate("/user/passenger/booking")}
+                    className="press rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white"
+                  >
+                    Book a Ride
+                  </button>
+                )
+              }
+            />
+          </div>
+        ) : (
+          <>
+            {bookings.map((booking) => {
+              const completed = booking.status === BookingStatus.COMPLETED;
+              return (
+                <button
+                  key={booking.id}
+                  onClick={() => navigate("/user/passenger/history")}
+                  className="w-full rounded-2xl border border-slate-100 bg-white p-4 text-left shadow-sm transition-shadow hover:shadow-md"
+                >
+                  <div className="mb-3 flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      {completed ? (
+                        <CheckCircle2 size={16} className="text-success-500" />
+                      ) : booking.status === BookingStatus.CANCELLED ? (
+                        <XCircle size={16} className="text-danger-400" />
+                      ) : (
+                        <span className="h-4 w-4 animate-pulse rounded-full bg-info-400" />
+                      )}
+                      <span
+                        className={`text-xs font-medium ${
+                          completed
+                            ? "text-success-600"
+                            : booking.status === BookingStatus.CANCELLED
+                              ? "text-danger-500"
+                              : "text-info-600"
+                        }`}
+                      >
+                        {booking.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-400">{formatDateTime(booking.createdAt)}</span>
                   </div>
-                )}
+
+                  <div className="flex items-start gap-2.5">
+                    <div className="mt-0.5 flex flex-col items-center gap-0.5">
+                      <div className="h-2 w-2 rounded-full bg-primary-500" />
+                      <div className="h-4 w-0.5 bg-slate-200" />
+                      <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-slate-900">{booking.pickupAddress}</p>
+                      <div className="h-2" />
+                      <p className="truncate text-sm font-medium text-slate-900">{booking.destinationAddress}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between border-t border-slate-50 pt-3">
+                    <div className="flex items-center gap-3">
+                      {Number(booking.totalFare) > 0 && (
+                        <span className="text-sm font-bold text-slate-900">{formatCurrency(booking.totalFare)}</span>
+                      )}
+                      {booking.driver && (
+                        <span className="text-xs text-slate-400">with {fullName(booking.driver)}</span>
+                      )}
+                    </div>
+                    <ChevronRight size={16} className="text-slate-300" />
+                  </div>
+                </button>
+              );
+            })}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="press flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 disabled:opacity-30"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="text-xs text-slate-400">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="press flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 disabled:opacity-30"
+                  aria-label="Next page"
+                >
+                  <ChevronRight size={16} />
+                </button>
               </div>
-              <ChevronRight size={16} className="text-slate-300" />
-            </div>
-          </button>
-        ))}
+            )}
+          </>
+        )}
       </div>
     </div>
   );

@@ -1,12 +1,36 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ServiceAreasService } from '../service-areas/service-areas.service';
 import { PricingService } from '../pricing/pricing.service';
+import { BookingsGateway } from '../gateway/bookings.gateway';
+import { NotificationsService } from '../notifications/notifications.service';
+import { BOOKING_EVENTS } from '../gateway/events';
 import { CreateBookingDto } from './dto/create-booking.dto';
-import { BookingStatus } from '@prisma/client';
+import { BookingStatus, Prisma } from '@prisma/client';
+
+type PrismaBookingWithRelations = Prisma.BookingGetPayload<{
+  include: { passenger: true; driver: true; serviceArea: true };
+}>;
+
+type DriverLocationFields = Pick<
+  Prisma.DriverGetPayload<{ select: { currentLat: true; currentLng: true } }>,
+  'currentLat' | 'currentLng'
+>;
+
+interface OfferCandidate extends DriverLocationFields {
+  id: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+}
 
 @Injectable()
 export class BookingsService {
+  private readonly logger = new Logger(BookingsService.name);
+  /** bookingId -> driver ids that declined the offer (in-memory, MVP scope) */
+  private readonly declinedDrivers = new Map<string, Set<string>>();
+
   private readonly validTransitions: Record<BookingStatus, BookingStatus[]> = {
     [BookingStatus.REQUESTED]: [BookingStatus.SEARCHING, BookingStatus.CANCELLED],
     [BookingStatus.SEARCHING]: [BookingStatus.ACCEPTED, BookingStatus.CANCELLED],
@@ -22,6 +46,8 @@ export class BookingsService {
     private readonly prisma: PrismaService,
     private readonly serviceAreasService: ServiceAreasService,
     private readonly pricingService: PricingService,
+    private readonly gateway: BookingsGateway,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async createBooking(passengerId: string, dto: CreateBookingDto) {
@@ -77,20 +103,45 @@ export class BookingsService {
     }
 
     await this.updateStatusInternal(bookingId, BookingStatus.SEARCHING);
+    this.declinedDrivers.set(bookingId, new Set());
+
+    return this.offerToNextDriver(bookingId);
+  }
+
+  /**
+   * Offer flow: assigns the nearest eligible driver provisionally (booking stays
+   * SEARCHING) and pushes a booking:offer event. The driver accepts via
+   * PATCH :id/status ACCEPTED or declines via :id/reject-offer.
+   */
+  private async offerToNextDriver(bookingId: string) {
+    const booking = await this.prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!booking || booking.status !== BookingStatus.SEARCHING) {
+      throw new BadRequestException('Booking is no longer searching');
+    }
 
     const serviceArea = await this.serviceAreasService.findById(booking.serviceAreaId);
     const maxRadius = Number(serviceArea.maxBookingRadiusKm);
+    const declined = this.declinedDrivers.get(bookingId) ?? new Set<string>();
 
-    const eligibleDrivers = await this.prisma.driver.findMany({
+    const eligibleDrivers: OfferCandidate[] = await this.prisma.driver.findMany({
       where: {
         verification: { status: 'APPROVED' },
         availability: { status: 'ONLINE' },
+        id: { notIn: Array.from(declined) },
         bookings: { none: { status: { in: [BookingStatus.REQUESTED, BookingStatus.SEARCHING, BookingStatus.ACCEPTED, BookingStatus.DRIVER_ARRIVING, BookingStatus.DRIVER_ARRIVED, BookingStatus.IN_PROGRESS] } } },
       },
-      include: { availability: true },
+      select: {
+        id: true,
+        userId: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        currentLat: true,
+        currentLng: true,
+      },
     });
 
-    let nearestDriver: typeof eligibleDrivers[number] | null = null;
+    let nearestDriver: OfferCandidate | null = null;
     let nearestDistance = Infinity;
 
     for (const driver of eligibleDrivers) {
@@ -106,7 +157,8 @@ export class BookingsService {
     }
 
     if (!nearestDriver) {
-      await this.updateStatusInternal(bookingId, BookingStatus.CANCELLED);
+      this.declinedDrivers.delete(bookingId);
+      await this.updateStatusInternal(bookingId, BookingStatus.CANCELLED, undefined, 'No drivers available');
       throw new BadRequestException('No drivers available');
     }
 
@@ -115,7 +167,8 @@ export class BookingsService {
       Number(booking.tripFare), pickupFee, booking.serviceAreaId,
     );
 
-    await this.prisma.booking.update({
+    // Provisional assignment — booking remains SEARCHING until driver accepts.
+    const updated = await this.prisma.booking.update({
       where: { id: bookingId },
       data: {
         driverId: nearestDriver.id,
@@ -123,16 +176,79 @@ export class BookingsService {
         pickupFee,
         totalFare: totalFare.total,
       },
+      include: { passenger: true, driver: true, serviceArea: true },
     });
 
-    await this.updateStatusInternal(bookingId, BookingStatus.ACCEPTED);
+    this.gateway.notifyDriver(nearestDriver.userId, BOOKING_EVENTS.BOOKING_OFFER, {
+      bookingId: updated.id,
+      status: updated.status,
+      pickupAddress: updated.pickupAddress,
+      destinationAddress: updated.destinationAddress,
+      pickupDistanceKm: updated.pickupDistanceKm,
+      tripDistanceKm: updated.tripDistanceKm,
+      tripFare: updated.tripFare,
+      pickupFee: updated.pickupFee,
+      platformFee: updated.platformFee,
+      totalFare: updated.totalFare,
+      passengerFirstName: updated.passenger?.firstName,
+      passengerLastName: updated.passenger?.lastName,
+      passengerPhone: updated.passenger?.phone,
+    });
 
-    return this.getBooking(bookingId);
+    return updated;
   }
 
-  async updateStatus(bookingId: string, newStatus: BookingStatus, userId: string) {
+  /** Driver declines a provisional offer; reassign to the next nearest driver. */
+  async rejectOffer(bookingId: string, driverUserId: string) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { driver: true },
+    });
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.status !== BookingStatus.SEARCHING) {
+      throw new BadRequestException('Booking is no longer awaiting acceptance');
+    }
+    if (!booking.driver || booking.driver.userId !== driverUserId) {
+      throw new ForbiddenException('This offer is not assigned to you');
+    }
+
+    const declined = this.declinedDrivers.get(bookingId) ?? new Set<string>();
+    declined.add(booking.driver.id);
+    this.declinedDrivers.set(bookingId, declined);
+
+    await this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { driverId: null, pickupFee: 0, pickupDistanceKm: null },
+    });
+
+    try {
+      return await this.offerToNextDriver(bookingId);
+    } catch {
+      // No drivers left — offerToNextDriver already cancelled the booking.
+      return this.getBooking(bookingId);
+    }
+  }
+
+  /** Current pending offer for a driver (polling fallback for socket push). */
+  async getPendingOfferForDriver(driverId: string) {
+    const booking = await this.prisma.booking.findFirst({
+      where: { driverId, status: BookingStatus.SEARCHING },
+      include: { passenger: true, serviceArea: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    return booking || null;
+  }
+
+  async updateStatus(bookingId: string, newStatus: BookingStatus, userId: string, driverId?: string) {
     const booking = await this.prisma.booking.findUnique({ where: { id: bookingId } });
     if (!booking) throw new NotFoundException('Booking not found');
+
+    if (newStatus === BookingStatus.ACCEPTED) {
+      if (!driverId || !booking.driverId || booking.driverId !== driverId) {
+        throw new ForbiddenException('This booking is not offered to you');
+      }
+      this.declinedDrivers.delete(bookingId);
+    }
 
     if (!this.isValidTransition(booking.status, newStatus)) {
       throw new BadRequestException(`Invalid transition from ${booking.status} to ${newStatus}`);
@@ -146,7 +262,7 @@ export class BookingsService {
       where: { id },
       include: {
         passenger: true,
-        driver: true,
+        driver: { include: { vehicle: true } },
         serviceArea: true,
         trip: true,
         statusHistory: { orderBy: { createdAt: 'asc' } },
@@ -157,32 +273,34 @@ export class BookingsService {
     return booking;
   }
 
-  async getPassengerBookings(passengerId: string, page = 1, limit = 20) {
+  async getPassengerBookings(passengerId: string, page = 1, limit = 20, status?: BookingStatus) {
     const skip = (page - 1) * limit;
+    const where = { passengerId, ...(status ? { status } : {}) };
     const [data, total] = await Promise.all([
       this.prisma.booking.findMany({
-        where: { passengerId },
+        where,
         include: { driver: true, serviceArea: true },
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
-      this.prisma.booking.count({ where: { passengerId } }),
+      this.prisma.booking.count({ where }),
     ]);
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  async getDriverBookings(driverId: string, page = 1, limit = 20) {
+  async getDriverBookings(driverId: string, page = 1, limit = 20, status?: BookingStatus) {
     const skip = (page - 1) * limit;
+    const where = { driverId, ...(status ? { status } : {}) };
     const [data, total] = await Promise.all([
       this.prisma.booking.findMany({
-        where: { driverId },
+        where,
         include: { passenger: true, serviceArea: true },
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
-      this.prisma.booking.count({ where: { driverId } }),
+      this.prisma.booking.count({ where }),
     ]);
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
@@ -221,11 +339,17 @@ export class BookingsService {
     });
   }
 
-  private async updateStatusInternal(bookingId: string, newStatus: BookingStatus, userId?: string) {
+  private async updateStatusInternal(
+    bookingId: string,
+    newStatus: BookingStatus,
+    userId?: string,
+    cancelReason?: string,
+  ) {
     const data: Record<string, unknown> = { status: newStatus };
 
     if (newStatus === BookingStatus.CANCELLED) {
       data.cancelledAt = new Date();
+      if (cancelReason) data.cancelReason = cancelReason;
     }
 
     const booking = await this.prisma.booking.update({
@@ -261,7 +385,111 @@ export class BookingsService {
       });
     }
 
+    this.emitLifecycleEvent(booking, newStatus, cancelReason);
     return booking;
+  }
+
+  /** Pushes socket events + in-app notifications for booking lifecycle transitions. */
+  private emitLifecycleEvent(
+    booking: PrismaBookingWithRelations,
+    newStatus: BookingStatus,
+    cancelReason?: string,
+  ): void {
+    const payload = { bookingId: booking.id };
+    const passengerUserId = booking.passenger?.userId;
+
+    try {
+      switch (newStatus) {
+        case BookingStatus.ACCEPTED:
+          this.gateway.emitToBookingRoom(booking.id, BOOKING_EVENTS.BOOKING_ACCEPTED, {
+            ...payload,
+            driverInfo: booking.driver
+              ? {
+                  firstName: booking.driver.firstName,
+                  lastName: booking.driver.lastName,
+                  phone: booking.driver.phone,
+                }
+              : null,
+          });
+          if (passengerUserId) {
+            void this.notifications.create(
+              passengerUserId,
+              'BOOKING_ACCEPTED',
+              'Driver found',
+              `${booking.driver?.firstName ?? 'Your driver'} accepted your booking.`,
+              payload,
+            );
+          }
+          break;
+        case BookingStatus.DRIVER_ARRIVING:
+          this.gateway.emitToBookingRoom(booking.id, BOOKING_EVENTS.DRIVER_ARRIVING, payload);
+          if (passengerUserId) {
+            void this.notifications.create(
+              passengerUserId,
+              'DRIVER_ARRIVING',
+              'Driver on the way',
+              `${booking.driver?.firstName ?? 'Your driver'} is heading to your pickup point.`,
+              payload,
+            );
+          }
+          break;
+        case BookingStatus.DRIVER_ARRIVED:
+          this.gateway.emitToBookingRoom(booking.id, BOOKING_EVENTS.DRIVER_ARRIVED, payload);
+          if (passengerUserId) {
+            void this.notifications.create(
+              passengerUserId,
+              'DRIVER_ARRIVED',
+              'Driver arrived',
+              `${booking.driver?.firstName ?? 'Your driver'} is waiting at the pickup point.`,
+              payload,
+            );
+          }
+          break;
+        case BookingStatus.IN_PROGRESS:
+          this.gateway.emitToBookingRoom(booking.id, BOOKING_EVENTS.TRIP_STARTED, payload);
+          if (passengerUserId) {
+            void this.notifications.create(
+              passengerUserId,
+              'TRIP_STARTED',
+              'Trip started',
+              'Enjoy your ride to your destination.',
+              payload,
+            );
+          }
+          break;
+        case BookingStatus.COMPLETED:
+          this.gateway.emitToBookingRoom(booking.id, BOOKING_EVENTS.TRIP_COMPLETED, payload);
+          if (passengerUserId) {
+            void this.notifications.create(
+              passengerUserId,
+              'TRIP_COMPLETED',
+              'Trip completed',
+              `Total fare: ₱${Number(booking.totalFare).toFixed(2)}. Cash payment due.`,
+              payload,
+            );
+          }
+          break;
+        case BookingStatus.CANCELLED:
+          this.gateway.emitToBookingRoom(booking.id, BOOKING_EVENTS.BOOKING_CANCELLED, {
+            ...payload,
+            reason: cancelReason,
+          });
+          if (passengerUserId) {
+            void this.notifications.create(
+              passengerUserId,
+              'BOOKING_CANCELLED',
+              'Booking cancelled',
+              cancelReason ?? 'Your booking was cancelled.',
+              payload,
+            );
+          }
+          break;
+        default:
+          break;
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to emit lifecycle event for booking ${booking.id}: ${String(err)}`);
+    }
   }
 
   private isValidTransition(currentStatus: BookingStatus, newStatus: BookingStatus): boolean {

@@ -30,6 +30,7 @@ interface AuthState {
   logout: () => void;
   loadFromStorage: () => void;
   consumeUrlToken: () => void;
+  setUser: (user: User) => void;
 }
 
 const TOKEN_KEY = "sundogo_token";
@@ -109,6 +110,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (token && user) {
       set({ user, token, isAuthenticated: true });
     }
+  },
+
+  setUser: (user) => {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    set({ user });
   },
 
   consumeUrlToken: () => {

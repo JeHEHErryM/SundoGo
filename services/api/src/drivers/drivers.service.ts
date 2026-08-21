@@ -72,7 +72,7 @@ export class DriversService {
     });
   }
 
-  async getAvailableDrivers(serviceAreaId: string) {
+  async getAvailableDrivers(_serviceAreaId: string) {
     return this.prisma.driver.findMany({
       where: {
         availability: { status: DriverAvailabilityStatus.ONLINE },
@@ -97,5 +97,42 @@ export class DriversService {
       update: { status, lastLocationUpdate: new Date() },
       create: { driverId, status, lastLocationUpdate: new Date() },
     });
+  }
+
+  /** Aggregated stats for the driver home dashboard. */
+  async getDashboard(driverId: string) {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const [todayTrips, todayEarningsAgg, totalEarningsAgg, ratingAgg, availability] =
+      await Promise.all([
+        this.prisma.trip.count({
+          where: { driverId, status: 'COMPLETED', completedAt: { gte: startOfToday } },
+        }),
+        this.prisma.payment.aggregate({
+          where: {
+            status: 'PAID',
+            trip: { driverId, completedAt: { gte: startOfToday } },
+          },
+          _sum: { amount: true },
+        }),
+        this.prisma.payment.aggregate({
+          where: { status: 'PAID', trip: { driverId } },
+          _sum: { amount: true },
+        }),
+        this.prisma.review.aggregate({
+          where: { driverId },
+          _avg: { rating: true },
+        }),
+        this.prisma.driverAvailability.findUnique({ where: { driverId } }),
+      ]);
+
+    return {
+      todayTrips,
+      todayEarnings: Number(todayEarningsAgg._sum.amount ?? 0),
+      totalEarnings: Number(totalEarningsAgg._sum.amount ?? 0),
+      averageRating: ratingAgg._avg.rating ? Number(ratingAgg._avg.rating.toFixed(1)) : null,
+      isOnline: availability?.status === DriverAvailabilityStatus.ONLINE,
+    };
   }
 }

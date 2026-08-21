@@ -20,32 +20,34 @@ export class TripsService {
     return trip;
   }
 
-  async getDriverTrips(driverId: string, page = 1, limit = 20) {
+  async getDriverTrips(driverId: string, page = 1, limit = 20, status?: TripStatus) {
     const skip = (page - 1) * limit;
+    const where = { driverId, ...(status ? { status } : {}) };
     const [data, total] = await Promise.all([
       this.prisma.trip.findMany({
-        where: { driverId },
+        where,
         include: { booking: true, passenger: true },
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
-      this.prisma.trip.count({ where: { driverId } }),
+      this.prisma.trip.count({ where }),
     ]);
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  async getPassengerTrips(passengerId: string, page = 1, limit = 20) {
+  async getPassengerTrips(passengerId: string, page = 1, limit = 20, status?: TripStatus) {
     const skip = (page - 1) * limit;
+    const where = { passengerId, ...(status ? { status } : {}) };
     const [data, total] = await Promise.all([
       this.prisma.trip.findMany({
-        where: { passengerId },
+        where,
         include: { booking: true, driver: true },
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
       }),
-      this.prisma.trip.count({ where: { passengerId } }),
+      this.prisma.trip.count({ where }),
     ]);
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }

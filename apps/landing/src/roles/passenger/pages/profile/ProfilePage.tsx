@@ -1,66 +1,94 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/auth.store";
 import {
-  User, Mail, Phone, LogOut, ChevronRight, Shield, Bell, HelpCircle,
-  CreditCard, MapPin, Camera, Edit3, AlertCircle,
+  User, Mail, Phone, LogOut, Bell, Loader2, CheckCircle2,
 } from "lucide-react";
+import api from "@/lib/api";
+import type { ApiResponse } from "@sundogo/types";
+
+interface ProfileUser {
+  id: string;
+  email: string;
+  role: string;
+  passenger?: { firstName?: string; lastName?: string; phone?: string } | null;
+  driver?: { firstName?: string; lastName?: string; phone?: string } | null;
+}
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user, logout, setUser } = useAuthStore();
+  const profile = (user as ProfileUser | null);
+  const roleProfile = profile?.passenger ?? profile?.driver ?? null;
+
   const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(user?.name || "Juan Dela Cruz");
-  const [email, setEmail] = useState(user?.email || "juan@example.com");
-  const [phone, setPhone] = useState(user?.phone || "+63 917 123 4567");
+  const [firstName, setFirstName] = useState(roleProfile?.firstName ?? "");
+  const [lastName, setLastName] = useState(roleProfile?.lastName ?? "");
+  const [phone, setPhone] = useState(roleProfile?.phone ?? "");
+  const [saved, setSaved] = useState(false);
+
+  const displayName =
+    [roleProfile?.firstName, roleProfile?.lastName].filter(Boolean).join(" ") ||
+    profile?.email.split("@")[0] ||
+    "Account";
+
+  const saveProfile = useMutation({
+    mutationFn: async () => {
+      const { data } = await api.patch<ApiResponse<ProfileUser>>("/api/auth/profile", {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        phone: phone.trim(),
+      });
+      return data.data!;
+    },
+    onSuccess: (updated) => {
+      if (user) {
+        setUser({
+          ...user,
+          firstName: updated.passenger?.firstName ?? updated.driver?.firstName,
+          lastName: updated.passenger?.lastName ?? updated.driver?.lastName,
+          phone: updated.passenger?.phone ?? updated.driver?.phone,
+        });
+      }
+      setEditing(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    },
+  });
 
   const handleLogout = () => {
     logout();
     navigate("/user/passenger/login");
   };
 
-  const menuSections = [
-    {
-      title: "Account",
-      items: [
-        { icon: Shield, label: "Safety & Security", desc: "Manage safety features", color: "text-primary-600 bg-primary-50" },
-        { icon: Bell, label: "Notifications", desc: "Alert preferences", color: "text-amber-600 bg-amber-50", action: () => navigate("/user/passenger/notifications") },
-        { icon: CreditCard, label: "Payment Methods", desc: "Manage payment options", color: "text-green-600 bg-green-50" },
-        { icon: MapPin, label: "Saved Places", desc: "Home, work, favorites", color: "text-purple-600 bg-purple-50" },
-      ],
-    },
-    {
-      title: "Support",
-      items: [
-        { icon: HelpCircle, label: "Help Center", desc: "FAQs and support", color: "text-cyan-600 bg-cyan-50" },
-        { icon: AlertCircle, label: "Report Issue", desc: "Something went wrong?", color: "text-red-600 bg-red-50" },
-      ],
-    },
-  ];
+  if (!user) return null;
 
   return (
     <div className="min-h-dvh bg-slate-50">
       {/* Header */}
       <div className="bg-white px-5 pt-6 pb-5 border-b border-slate-100">
         <div className="flex items-center gap-4">
-          <div className="relative">
-            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center text-xl font-bold text-primary-600">
-              {name.charAt(0)}
-            </div>
-            <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-primary-600 rounded-full flex items-center justify-center border-2 border-white">
-              <Camera size={12} className="text-white" />
+          <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center text-xl font-bold text-primary-600">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-bold text-slate-900 truncate">{displayName}</h1>
+            <p className="text-sm text-slate-500 truncate">{profile?.email}</p>
+          </div>
+          {!editing && (
+            <button
+              onClick={() => {
+                setFirstName(roleProfile?.firstName ?? "");
+                setLastName(roleProfile?.lastName ?? "");
+                setPhone(roleProfile?.phone ?? "");
+                setEditing(true);
+              }}
+              className="h-9 px-4 bg-primary-50 text-primary-700 rounded-full text-sm font-semibold hover:bg-primary-100 transition-colors"
+            >
+              Edit
             </button>
-          </div>
-          <div className="flex-1">
-            <h1 className="text-lg font-bold text-slate-900">{name}</h1>
-            <p className="text-sm text-slate-500">{email}</p>
-          </div>
-          <button
-            onClick={() => setEditing(!editing)}
-            className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center"
-          >
-            <Edit3 size={16} className="text-slate-600" />
-          </button>
+          )}
         </div>
       </div>
 
@@ -69,26 +97,28 @@ export default function ProfilePage() {
         {editing && (
           <div className="bg-white rounded-2xl p-4 border border-slate-100 space-y-3">
             <h3 className="text-sm font-semibold text-slate-900">Edit Profile</h3>
-            <div>
-              <label className="text-xs text-slate-500">Name</label>
-              <div className="relative mt-1">
-                <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full h-10 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary-500 focus:bg-white"
-                />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-slate-500">First Name</label>
+                <div className="relative mt-1">
+                  <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full h-10 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary-500 focus:bg-white outline-none"
+                  />
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="text-xs text-slate-500">Email</label>
-              <div className="relative mt-1">
-                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-10 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary-500 focus:bg-white"
-                />
+              <div>
+                <label className="text-xs text-slate-500">Last Name</label>
+                <div className="relative mt-1">
+                  <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full h-10 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary-500 focus:bg-white outline-none"
+                  />
+                </div>
               </div>
             </div>
             <div>
@@ -98,61 +128,66 @@ export default function ProfilePage() {
                 <input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full h-10 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary-500 focus:bg-white"
+                  inputMode="tel"
+                  className="w-full h-10 pl-9 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary-500 focus:bg-white outline-none"
                 />
               </div>
             </div>
-            <button
-              onClick={() => setEditing(false)}
-              className="w-full h-10 bg-primary-600 text-white font-medium rounded-lg text-sm hover:bg-primary-700 transition-colors"
-            >
-              Save Changes
-            </button>
+            <div>
+              <label className="text-xs text-slate-500">Email</label>
+              <div className="relative mt-1">
+                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={profile?.email ?? ""}
+                  disabled
+                  className="w-full h-10 pl-9 pr-3 bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-400 cursor-not-allowed"
+                />
+              </div>
+            </div>
+            {saveProfile.isError && (
+              <p className="text-xs text-danger-600">Could not save your changes. Please try again.</p>
+            )}
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => setEditing(false)}
+                className="flex-1 h-10 bg-slate-100 text-slate-600 font-medium rounded-lg text-sm hover:bg-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => saveProfile.mutate()}
+                disabled={saveProfile.isPending || !firstName.trim()}
+                className="flex-1 h-10 bg-primary-600 text-white font-medium rounded-lg text-sm hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {saveProfile.isPending && <Loader2 size={14} className="animate-spin" />}
+                Save Changes
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Menu sections */}
-        {menuSections.map((section) => (
-          <div key={section.title}>
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-1">{section.title}</h3>
-            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-              {section.items.map((item, i) => (
-                <button
-                  key={item.label}
-                  onClick={item.action}
-                  className={`w-full flex items-center gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors text-left ${
-                    i < section.items.length - 1 ? "border-b border-slate-50" : ""
-                  }`}
-                >
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${item.color}`}>
-                    <item.icon size={16} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-900">{item.label}</p>
-                    <p className="text-xs text-slate-400">{item.desc}</p>
-                  </div>
-                  <ChevronRight size={16} className="text-slate-300" />
-                </button>
-              ))}
-            </div>
+        {saved && (
+          <div className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm font-medium">
+            <CheckCircle2 size={16} />
+            Profile updated
           </div>
-        ))}
+        )}
 
-        {/* Emergency contacts */}
+        {/* Menu */}
         <div>
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-1">Emergency</h3>
-          <div className="bg-white rounded-2xl border border-slate-100 p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 bg-red-50 rounded-lg flex items-center justify-center">
-                <Shield size={16} className="text-red-600" />
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-1">Account</h3>
+          <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+            <button
+              onClick={() => navigate("/user/passenger/notifications")}
+              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors text-left"
+            >
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-amber-50 text-amber-600">
+                <Bell size={16} />
               </div>
-              <div>
-                <p className="text-sm font-medium text-slate-900">Emergency Contacts</p>
-                <p className="text-xs text-slate-400">People to notify during trips</p>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-slate-900">Notifications</p>
+                <p className="text-xs text-slate-400">Trip updates and alerts</p>
               </div>
-            </div>
-            <button className="w-full h-10 bg-slate-50 border border-dashed border-slate-300 rounded-lg text-sm text-slate-500 font-medium hover:bg-slate-100 transition-colors">
-              + Add Emergency Contact
             </button>
           </div>
         </div>

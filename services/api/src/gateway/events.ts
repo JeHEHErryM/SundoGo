@@ -1,5 +1,6 @@
 export const BOOKING_EVENTS = {
   JOIN_BOOKING: 'booking:join',
+  BOOKING_OFFER: 'booking:offer',
   DRIVER_LOCATION: 'driver:location',
   BOOKING_ACCEPTED: 'booking:accepted',
   DRIVER_ARRIVING: 'driver:arriving',
