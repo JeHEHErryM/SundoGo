@@ -270,7 +270,23 @@ export class BookingsService {
       },
     });
     if (!booking) throw new NotFoundException('Booking not found');
-    return booking;
+    if (!booking.driver) return booking;
+
+    // Attach the driver's real rating so passengers never see a placeholder.
+    const agg = await this.prisma.review.aggregate({
+      where: { driverId: booking.driver.id },
+      _avg: { rating: true },
+      _count: { _all: true },
+    });
+
+    return {
+      ...booking,
+      driver: {
+        ...booking.driver,
+        averageRating: agg._avg.rating ? Number(agg._avg.rating.toFixed(1)) : null,
+        reviewCount: agg._count._all,
+      },
+    };
   }
 
   async getPassengerBookings(passengerId: string, page = 1, limit = 20, status?: BookingStatus) {

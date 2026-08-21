@@ -17,6 +17,7 @@ interface BookingDetail {
     lastName: string;
     phone: string;
     avatarUrl?: string;
+    averageRating?: number | null;
     vehicle?: { vehicleType: string; plateNumber: string } | null;
   } | null;
 }
@@ -65,7 +66,7 @@ export default function SearchingDriverPage() {
         avatar: booking.driver.avatarUrl,
         vehicleType: booking.driver.vehicle?.vehicleType ?? "Tricycle",
         plateNumber: booking.driver.vehicle?.plateNumber ?? "—",
-        rating: 5,
+        rating: booking.driver.averageRating ?? 0,
       });
       setBookingStatus("driver_accepted");
       void queryClient.invalidateQueries({ queryKey: ["notifications"] });

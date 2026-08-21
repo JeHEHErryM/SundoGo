@@ -21,6 +21,7 @@ interface BookingDetail {
     lastName: string;
     phone: string;
     avatarUrl?: string;
+    averageRating?: number | null;
     vehicle?: { vehicleType: string; plateNumber: string } | null;
   } | null;
 }
@@ -56,7 +57,7 @@ export default function DriverAcceptedPage() {
       avatar: booking.driver.avatarUrl,
       vehicleType: booking.driver.vehicle?.vehicleType ?? "Tricycle",
       plateNumber: booking.driver.vehicle?.plateNumber ?? "—",
-      rating: 5,
+      rating: booking.driver.averageRating ?? 0,
     });
   }, [booking, driverInfo, setDriverInfo]);
 
@@ -134,7 +135,9 @@ export default function DriverAcceptedPage() {
               <h3 className="text-sm font-bold text-slate-900">{driverInfo.name}</h3>
               <div className="flex items-center gap-1">
                 <Star size={12} className="text-amber-400" fill="currentColor" />
-                <span className="text-xs font-medium text-slate-600">{driverInfo.rating}</span>
+                <span className="text-xs font-medium text-slate-600">
+                  {driverInfo.rating > 0 ? driverInfo.rating.toFixed(1) : "New driver"}
+                </span>
               </div>
             </div>
             <a
