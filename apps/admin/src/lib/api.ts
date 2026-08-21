@@ -19,7 +19,7 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       localStorage.removeItem("admin_token");
       localStorage.removeItem("admin_user");
-      window.location.href = "/login";
+      window.location.href = "https://sundo-go.vercel.app/login";
     }
     return Promise.reject(err);
   }

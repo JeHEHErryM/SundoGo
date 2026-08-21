@@ -25,7 +25,7 @@ api.interceptors.response.use(
   (err) => {
     if (err.response?.status === 401) {
       localStorage.removeItem("driver-auth");
-      window.location.href = "/login";
+      window.location.href = "https://sundo-go.vercel.app/login";
     }
     return Promise.reject(err);
   }
