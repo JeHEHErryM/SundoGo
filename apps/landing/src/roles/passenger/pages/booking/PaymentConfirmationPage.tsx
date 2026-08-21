@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useBookingStore } from "../../stores/booking.store";
 import { CheckCircle2, Banknote, Home, Clock, Loader2 } from "lucide-react";
 import api from "@/lib/api";
+import { Avatar } from "@/components/shared";
 import type { ApiResponse } from "@sundogo/types";
 
 interface PaymentDetail {
@@ -94,9 +95,7 @@ export default function PaymentConfirmationPage() {
         {/* Driver */}
         {driverInfo && (
           <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-xl">
-            <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-sm font-bold text-primary-600">
-              {driverInfo.name.charAt(0)}
-            </div>
+            <Avatar name={driverInfo.name} src={driverInfo.avatar} size="md" />
             <div>
               <p className="text-sm font-semibold text-slate-900">{driverInfo.name}</p>
               <p className="text-xs text-slate-500">{driverInfo.vehicleType} • {driverInfo.plateNumber}</p>

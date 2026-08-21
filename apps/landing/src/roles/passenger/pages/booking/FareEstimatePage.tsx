@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useBookingStore } from "../../stores/booking.store";
 import { ArrowLeft, Clock, Route, Banknote, Bike, Loader2 } from "lucide-react";
 import api from "@/lib/api";
+import { LoadingOverlay } from "@/components/shared";
 import type { ApiResponse } from "@sundogo/types";
 
 interface ServiceArea {
@@ -94,6 +95,8 @@ export default function FareEstimatePage() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-white">
+      <LoadingOverlay show={createBooking.isPending} message="Creating your booking ..." />
+
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-slate-100 px-4 pb-3 pt-4">
         <button

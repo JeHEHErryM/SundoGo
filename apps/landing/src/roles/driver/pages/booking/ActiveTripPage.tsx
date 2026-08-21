@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Car, User, Navigation, Loader2, Phone } from "lucide-react";
+import { Car, Navigation, Loader2, Phone } from "lucide-react";
 import api from "@/lib/api";
 import { useDriverStore } from "@/stores/driver.store";
 import { useActiveBooking } from "@/roles/driver/hooks/useActiveBooking";
+import { Avatar, LoadingOverlay } from "@/components/shared";
 import { BookingStatus } from "@sundogo/types";
 
 export default function ActiveTripPage() {
@@ -46,6 +47,8 @@ export default function ActiveTripPage() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-50">
+      <LoadingOverlay show={completeMutation.isPending} message="Completing your trip ..." />
+
       {/* Map Area */}
       <div className="relative h-[40dvh] bg-gradient-to-br from-slate-700 to-slate-900">
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white/60">
@@ -69,9 +72,14 @@ export default function ActiveTripPage() {
       <div className="safe-area-pb mx-auto -mt-6 w-full max-w-lg flex-1 rounded-t-3xl bg-white px-5 pb-6 pt-6 shadow-lg">
         {/* Passenger */}
         <div className="mb-4 flex items-center gap-3 rounded-xl bg-gray-50 p-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 text-primary-600">
-            <User className="h-6 w-6" />
-          </div>
+          <Avatar
+            name={
+              [booking.passenger?.firstName, booking.passenger?.lastName].filter(Boolean).join(" ") ||
+              "Passenger"
+            }
+            src={booking.passenger?.avatarUrl}
+            size="lg"
+          />
           <div className="flex-1">
             <p className="font-semibold text-gray-800">
               {[booking.passenger?.firstName, booking.passenger?.lastName].filter(Boolean).join(" ") || "Passenger"}

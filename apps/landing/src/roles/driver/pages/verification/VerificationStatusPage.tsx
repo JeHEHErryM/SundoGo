@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck, Link2, Loader2, CheckCircle2, XCircle, Clock, ExternalLink } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth.store";
+import { LoadingOverlay } from "@/components/shared";
 import type { ApiResponse, DriverVerificationStatus } from "@sundogo/types";
 
 interface VerificationData {
@@ -76,6 +77,8 @@ export default function VerificationStatusPage() {
 
   return (
     <div className="min-h-dvh bg-gray-50">
+      <LoadingOverlay show={submitMutation.isPending} message="Submitting your documents ..." />
+
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 px-5 pb-16 pt-10 text-white">
         <div className="flex items-center gap-3">
           <ShieldCheck className="h-6 w-6 text-primary-400" />

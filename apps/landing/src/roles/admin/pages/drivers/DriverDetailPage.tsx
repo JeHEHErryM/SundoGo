@@ -30,6 +30,7 @@ interface AdminDriverDetail {
   firstName: string;
   lastName: string;
   phone: string;
+  avatarUrl?: string;
   user: { email: string; createdAt: string };
   verification: {
     id: string;
@@ -191,7 +192,7 @@ export default function DriverDetailPage() {
         {/* Profile */}
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
           <div className="mb-5 flex items-center gap-4">
-            <Avatar name={name} size="xl" />
+            <Avatar name={name} src={driver.avatarUrl} size="xl" />
             <div className="min-w-0">
               <h2 className="truncate text-lg font-bold text-slate-900">{name}</h2>
               <div className="mt-1 flex flex-wrap items-center gap-1.5">

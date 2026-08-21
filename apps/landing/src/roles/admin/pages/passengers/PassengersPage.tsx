@@ -14,6 +14,7 @@ interface AdminPassenger {
   firstName: string;
   lastName: string;
   phone: string;
+  avatarUrl?: string;
   user: { email: string; createdAt: string };
   _count: { bookings: number; trips: number };
 }
@@ -25,7 +26,7 @@ const columns: Column<AdminPassenger>[] = [
     primary: true,
     render: (row) => (
       <div className="flex items-center gap-3">
-        <Avatar name={fullName(row)} size="sm" />
+        <Avatar name={fullName(row)} src={row.avatarUrl} size="sm" />
         <div className="min-w-0">
           <p className="truncate font-semibold text-slate-800">{fullName(row)}</p>
           <p className="truncate text-xs text-slate-400">{row.user.email}</p>

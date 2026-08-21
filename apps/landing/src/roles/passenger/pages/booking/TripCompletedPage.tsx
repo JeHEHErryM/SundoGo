@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useBookingStore } from "../../stores/booking.store";
 import { CheckCircle2, Star, Receipt, Loader2 } from "lucide-react";
 import api from "@/lib/api";
+import { Avatar } from "@/components/shared";
 import type { ApiResponse } from "@sundogo/types";
 import { BookingStatus } from "@sundogo/types";
 
@@ -21,6 +22,7 @@ interface BookingDetail {
     id: string;
     firstName: string;
     lastName: string;
+    avatarUrl?: string;
   } | null;
 }
 
@@ -126,9 +128,7 @@ export default function TripCompletedPage() {
         {driverName && (
           <div className="bg-white rounded-2xl p-4 border border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-sm font-bold text-primary-600">
-                {driverName.charAt(0)}
-              </div>
+              <Avatar name={driverName} src={booking.driver?.avatarUrl} size="md" />
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-900">{driverName}</p>
                 <p className="text-xs text-slate-400">Your driver for this trip</p>

@@ -26,6 +26,7 @@ interface PendingVerification {
     firstName: string;
     lastName: string;
     phone: string;
+    avatarUrl?: string;
     user: { email: string };
   };
 }
@@ -127,7 +128,7 @@ export default function VerificationQueuePage() {
                   onClick={() => setSelected(selected?.id === v.id ? null : v)}
                   className="flex min-w-0 flex-1 items-center gap-3.5 text-left"
                 >
-                  <Avatar name={fullName(v.driver)} size="lg" />
+                  <Avatar name={fullName(v.driver)} src={v.driver?.avatarUrl} size="lg" />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-slate-900">{fullName(v.driver)}</p>
                     <p className="truncate text-xs text-slate-400">{v.driver?.user.email}</p>

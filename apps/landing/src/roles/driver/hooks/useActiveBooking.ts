@@ -4,7 +4,7 @@ import { useDriverStore } from "@/stores/driver.store";
 import type { ApiResponse, Booking } from "@sundogo/types";
 
 type ActiveBooking = Booking & {
-  passenger?: { firstName: string; lastName: string; phone: string } | null;
+  passenger?: { firstName: string; lastName: string; phone: string; avatarUrl?: string } | null;
 };
 
 /**

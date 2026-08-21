@@ -16,6 +16,7 @@ interface BookingDetail {
     firstName: string;
     lastName: string;
     phone: string;
+    avatarUrl?: string;
     vehicle?: { vehicleType: string; plateNumber: string } | null;
   } | null;
 }
@@ -61,6 +62,7 @@ export default function SearchingDriverPage() {
         id: booking.driver.id,
         name: [booking.driver.firstName, booking.driver.lastName].filter(Boolean).join(" "),
         phone: booking.driver.phone,
+        avatar: booking.driver.avatarUrl,
         vehicleType: booking.driver.vehicle?.vehicleType ?? "Tricycle",
         plateNumber: booking.driver.vehicle?.plateNumber ?? "—",
         rating: 5,

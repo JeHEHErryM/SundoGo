@@ -6,6 +6,7 @@ import { Phone, Star, Shield, Navigation, Bike, Loader2, XCircle } from "lucide-
 import Map from "../../Map";
 import api from "@/lib/api";
 import { getSocket, BOOKING_EVENTS } from "@/lib/socket";
+import { Avatar } from "@/components/shared";
 import type { ApiResponse } from "@sundogo/types";
 import { BookingStatus } from "@sundogo/types";
 
@@ -19,6 +20,7 @@ interface BookingDetail {
     firstName: string;
     lastName: string;
     phone: string;
+    avatarUrl?: string;
     vehicle?: { vehicleType: string; plateNumber: string } | null;
   } | null;
 }
@@ -51,6 +53,7 @@ export default function DriverAcceptedPage() {
       id: booking.driver.id,
       name: [booking.driver.firstName, booking.driver.lastName].filter(Boolean).join(" "),
       phone: booking.driver.phone,
+      avatar: booking.driver.avatarUrl,
       vehicleType: booking.driver.vehicle?.vehicleType ?? "Tricycle",
       plateNumber: booking.driver.vehicle?.plateNumber ?? "—",
       rating: 5,
@@ -126,9 +129,7 @@ export default function DriverAcceptedPage() {
         {/* Driver card */}
         <div className="bg-white border border-slate-200 rounded-2xl p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center text-xl font-bold text-primary-600">
-              {driverInfo.name.charAt(0)}
-            </div>
+            <Avatar name={driverInfo.name} src={driverInfo.avatar} size="lg" />
             <div className="flex-1">
               <h3 className="text-sm font-bold text-slate-900">{driverInfo.name}</h3>
               <div className="flex items-center gap-1">

@@ -137,7 +137,7 @@ export default function ServiceAreasPage() {
                     onClick={() => update.mutate({ id: area.id, enabled: !area.enabled })}
                     className={`toggle-switch ${area.enabled ? "!bg-primary-600" : ""}`}
                   >
-                    <span className={`toggle-dot ${area.enabled ? "translate-x-5" : ""}`} />
+                    <span className="toggle-dot" />
                   </button>
 
                   <button

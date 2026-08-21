@@ -141,15 +141,19 @@ select:focus {
   transform: scale(0.97);
 }
 
-/* Toggle switch */
+/* Toggle switch — knob travel is derived from the switch's own box so any
+   width stays symmetrical (padding 3px each side). */
 .toggle-switch {
   position: relative;
   display: inline-flex;
+  align-items: center;
   height: 1.75rem;
   width: 3.25rem;
   flex-shrink: 0;
+  padding: 3px;
   cursor: pointer;
   border-radius: 9999px;
+  background-color: #cbd5e1;
   transition: background-color 0.25s ease;
 }
 .toggle-dot {
@@ -160,11 +164,11 @@ select:focus {
   border-radius: 9999px;
   background: white;
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
-  transform: translateX(3px);
+  transform: translateX(0);
   transition: transform 0.25s var(--ease-out-quart);
 }
 .toggle-switch[aria-checked="true"] .toggle-dot {
-  transform: translateX(1.75rem);
+  transform: translateX(calc(100% + 2px));
 }
 
 @keyframes float {

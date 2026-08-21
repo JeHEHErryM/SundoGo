@@ -2,6 +2,7 @@ import { initials } from "./formatters";
 
 interface AvatarProps {
   name: string;
+  src?: string | null;
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 }
@@ -13,8 +14,19 @@ const sizes = {
   xl: "h-16 w-16 text-xl",
 };
 
-export default function Avatar({ name, size = "md", className = "" }: AvatarProps) {
+export default function Avatar({ name, src, size = "md", className = "" }: AvatarProps) {
   const hue = [...name].reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
+
+  if (src) {
+    return (
+      <img
+        alt={name}
+        src={src}
+        className={`shrink-0 select-none rounded-full object-cover ${sizes[size]} ${className}`}
+      />
+    );
+  }
+
   return (
     <div
       aria-hidden

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Search, Clock, Shield, ChevronRight, MapPin, History } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth.store";
-import { Skeleton, EmptyState, formatDateTime, formatCurrency, fullName } from "@/components/shared";
+import { Skeleton, EmptyState, formatDateTime, formatCurrency, fullName, Avatar } from "@/components/shared";
 import type { ApiResponse } from "@sundogo/types";
 import type { BookingStatus } from "@sundogo/types";
 
@@ -34,9 +34,19 @@ export default function HomePage() {
     <div className="min-h-dvh bg-slate-50">
         {/* Greeting */}
         <div className="bg-gradient-to-br from-primary-700 to-primary-900 px-4 pb-10 pt-6 text-white">
-          <p className="text-sm text-primary-100">Welcome back,</p>
-          <h1 className="mt-0.5 text-xl font-bold">{user?.firstName || "Rider"}!</h1>
-          <p className="mt-1 text-sm text-primary-100">Where would you like to go today?</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm text-primary-100">Welcome back,</p>
+              <h1 className="mt-0.5 truncate text-xl font-bold">{user?.firstName || "Rider"}!</h1>
+            </div>
+            <Avatar
+              name={user?.name || "Rider"}
+              src={user?.avatar}
+              size="lg"
+              className="shrink-0 ring-2 ring-white/30"
+            />
+          </div>
+          <p className="mt-3 text-sm text-primary-100">Where would you like to go today?</p>
         </div>
 
       {/* Content */}

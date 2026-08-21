@@ -8,7 +8,7 @@ import {
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth.store";
 import { useDriverStore } from "@/stores/driver.store";
-import { Skeleton, formatCurrency, useCountUp } from "@/components/shared";
+import { Skeleton, formatCurrency, useCountUp, Avatar, LoadingOverlay } from "@/components/shared";
 import type { ApiResponse } from "@sundogo/types";
 
 interface DashboardData {
@@ -58,6 +58,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-dvh bg-slate-50">
+      <LoadingOverlay
+        show={toggleOnline.isPending}
+        message={isOnline ? "Going offline ..." : "Going online ..."}
+      />
+
       {/* Header */}
       <div className="relative overflow-hidden bg-gradient-to-br from-primary-700 to-primary-900 px-4 pb-10 pt-6 text-white">
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary-400/20 blur-2xl" />
@@ -71,9 +76,12 @@ export default function HomePage() {
             <h1 className="mt-0.5 text-xl font-bold">Welcome, {user?.firstName || "Driver"}!</h1>
           </div>
           <div className="relative">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-base font-bold backdrop-blur-sm">
-              {(user?.firstName?.[0] ?? "") + (user?.lastName?.[0] ?? "")}
-            </div>
+            <Avatar
+              name={user?.name || "Driver"}
+              src={user?.avatar}
+              size="lg"
+              className="ring-2 ring-white/30"
+            />
             <span
               className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-primary-800 ${
                 isOnline ? "bg-success-400" : "bg-slate-400"
@@ -139,12 +147,12 @@ export default function HomePage() {
           <button
             onClick={() => toggleOnline.mutate()}
             disabled={toggleOnline.isPending}
-            className={`toggle-switch ${isOnline ? "!bg-success-500" : "!bg-slate-300"} !w-16`}
+            className={`toggle-switch ${isOnline ? "!bg-success-500" : ""}`}
             role="switch"
             aria-checked={isOnline}
             aria-label="Toggle online status"
           >
-            <span className={`toggle-dot ${isOnline ? "translate-x-7" : ""}`} />
+            <span className="toggle-dot" />
           </button>
         </div>
 

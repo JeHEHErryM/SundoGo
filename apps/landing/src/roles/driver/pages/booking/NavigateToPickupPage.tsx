@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Navigation, User, Phone, MapPin, Loader2, ArrowLeft } from "lucide-react";
+import { Navigation, Phone, MapPin, Loader2, ArrowLeft } from "lucide-react";
 import api from "@/lib/api";
 import { useDriverStore } from "@/stores/driver.store";
 import { useActiveBooking } from "@/roles/driver/hooks/useActiveBooking";
+import { Avatar, LoadingOverlay } from "@/components/shared";
 import { BookingStatus } from "@sundogo/types";
 
 export default function NavigateToPickupPage() {
@@ -61,6 +62,8 @@ export default function NavigateToPickupPage() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-50">
+      <LoadingOverlay show={advance.isPending} message="Updating trip status ..." />
+
       {/* Map Placeholder */}
       <div className="relative h-[45dvh] bg-gradient-to-br from-primary-800 to-primary-600">
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white/70">
@@ -123,9 +126,14 @@ export default function NavigateToPickupPage() {
 
         {/* Passenger Info */}
         <div className="mb-4 flex items-center gap-3 rounded-xl bg-gray-50 p-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 text-primary-600">
-            <User className="h-6 w-6" />
-          </div>
+          <Avatar
+            name={
+              [booking.passenger?.firstName, booking.passenger?.lastName].filter(Boolean).join(" ") ||
+              "Passenger"
+            }
+            src={booking.passenger?.avatarUrl}
+            size="lg"
+          />
           <div className="flex-1">
             <p className="font-semibold text-gray-800">
               {[booking.passenger?.firstName, booking.passenger?.lastName].filter(Boolean).join(" ") || "Passenger"}

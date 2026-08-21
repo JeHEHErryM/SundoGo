@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Menu, X, LayoutDashboard } from 'lucide-react';
 import { useAuthStore } from '../stores/auth.store';
 import { dashboardPathFor } from './RedirectIfAuthenticated';
+import { Avatar } from './shared';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -18,7 +19,7 @@ export default function Navbar() {
 
   return (
     <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-200 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm' : 'bg-transparent'}`}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div className="w-full px-4 sm:px-6 lg:px-10 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-10 w-auto" />
           <span className="text-lg font-bold text-slate-900">SundoGo</span>
@@ -27,9 +28,12 @@ export default function Navbar() {
         <div className="hidden sm:flex items-center gap-3">
           {isAuthenticated ? (
             <>
-              <span className="text-sm font-medium text-slate-600">
-                Hi, {user?.firstName || 'there'}!
-              </span>
+              <div className="flex items-center gap-2.5">
+                <Avatar name={user?.name || 'there'} src={user?.avatar} size="sm" />
+                <span className="text-sm font-medium text-slate-600">
+                  Hi, {user?.firstName || 'there'}!
+                </span>
+              </div>
               <Link
                 to={dashboardPathFor(user?.role)}
                 className="h-9 px-5 flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg transition-colors"
@@ -73,9 +77,12 @@ export default function Navbar() {
         <div className="bg-white border-t border-slate-100 px-4 py-4 space-y-3">
           {isAuthenticated ? (
             <>
-              <p className="text-sm font-medium text-slate-600">
-                Hi, {user?.firstName || 'there'}!
-              </p>
+              <div className="flex items-center gap-2.5">
+                <Avatar name={user?.name || 'there'} src={user?.avatar} size="sm" />
+                <p className="text-sm font-medium text-slate-600">
+                  Hi, {user?.firstName || 'there'}!
+                </p>
+              </div>
               <Link
                 to={dashboardPathFor(user?.role)}
                 onClick={() => setMobileOpen(false)}

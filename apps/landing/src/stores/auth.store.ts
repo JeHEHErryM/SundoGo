@@ -43,11 +43,11 @@ interface RawApiUser {
   firstName?: string;
   lastName?: string;
   phone?: string;
-  passenger?: { firstName?: string; lastName?: string; phone?: string } | null;
-  driver?: { firstName?: string; lastName?: string; phone?: string } | null;
+  passenger?: { firstName?: string; lastName?: string; phone?: string; avatarUrl?: string | null } | null;
+  driver?: { firstName?: string; lastName?: string; phone?: string; avatarUrl?: string | null } | null;
 }
 
-/** Flattens profile names/phone to the top level so UI can rely on user.firstName. */
+/** Flattens profile names/phone/avatar to the top level so UI can rely on user.firstName etc. */
 function normalizeUser(raw: RawApiUser): User {
   const profile = raw.passenger ?? raw.driver ?? null;
   const firstName = raw.firstName ?? profile?.firstName;
@@ -61,6 +61,7 @@ function normalizeUser(raw: RawApiUser): User {
     firstName,
     lastName,
     phone: raw.phone ?? profile?.phone,
+    avatar: profile?.avatarUrl ?? undefined,
   };
 }
 

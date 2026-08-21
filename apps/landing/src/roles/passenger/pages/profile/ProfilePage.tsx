@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/auth.store";
 import {
-  User, Mail, Phone, LogOut, Bell, Loader2, CheckCircle2,
+  User, Mail, Phone, LogOut, Bell, Loader2, CheckCircle2, Camera,
 } from "lucide-react";
 import api from "@/lib/api";
+import { fileToResizedDataUrl } from "@/lib/image";
+import { Avatar, LoadingOverlay } from "@/components/shared";
 import type { ApiResponse } from "@sundogo/types";
 
 interface ProfileUser {
@@ -27,6 +29,7 @@ export default function ProfilePage() {
   const [lastName, setLastName] = useState(roleProfile?.lastName ?? "");
   const [phone, setPhone] = useState(roleProfile?.phone ?? "");
   const [saved, setSaved] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const displayName =
     [roleProfile?.firstName, roleProfile?.lastName].filter(Boolean).join(" ") ||
@@ -57,6 +60,19 @@ export default function ProfilePage() {
     },
   });
 
+  const uploadAvatar = useMutation({
+    mutationFn: async (file: File) => {
+      const avatarUrl = await fileToResizedDataUrl(file);
+      await api.patch("/api/auth/profile", { avatarUrl });
+      return avatarUrl;
+    },
+    onSuccess: (avatarUrl) => {
+      if (user) setUser({ ...user, avatar: avatarUrl });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    },
+  });
+
   const handleLogout = () => {
     logout();
     navigate("/user/passenger/login");
@@ -66,11 +82,35 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-dvh bg-slate-50">
+      <LoadingOverlay
+        show={saveProfile.isPending || uploadAvatar.isPending}
+        message="Saving your profile ..."
+      />
+
       {/* Header */}
       <div className="bg-white px-5 pt-6 pb-5 border-b border-slate-100">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center text-xl font-bold text-primary-600">
-            {displayName.charAt(0).toUpperCase()}
+          <div className="relative shrink-0">
+            <Avatar name={displayName} src={user.avatar} size="xl" />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadAvatar.isPending}
+              aria-label="Change profile photo"
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-white shadow-md ring-2 ring-white transition-colors hover:bg-primary-700 disabled:opacity-60"
+            >
+              <Camera size={14} />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadAvatar.mutate(file);
+                e.target.value = "";
+              }}
+            />
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-bold text-slate-900 truncate">{displayName}</h1>
@@ -144,7 +184,7 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
-            {saveProfile.isError && (
+            {(saveProfile.isError || uploadAvatar.isError) && (
               <p className="text-xs text-danger-600">Could not save your changes. Please try again.</p>
             )}
             <div className="flex gap-2 pt-1">

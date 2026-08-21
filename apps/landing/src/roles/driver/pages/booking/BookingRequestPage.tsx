@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock, User, Phone, Check, X } from "lucide-react";
+import { Clock, Phone, Check, X } from "lucide-react";
 import api from "@/lib/api";
 import { getSocket, BOOKING_EVENTS } from "@/lib/socket";
 import { useDriverStore } from "@/stores/driver.store";
+import { Avatar, LoadingOverlay } from "@/components/shared";
 import { BookingStatus } from "@sundogo/types";
 import type { ApiResponse, Booking } from "@sundogo/types";
 
 const COUNTDOWN = 30;
 
 type OfferBooking = Booking & {
-  passenger?: { firstName: string; lastName: string; phone: string } | null;
+  passenger?: { firstName: string; lastName: string; phone: string; avatarUrl?: string } | null;
 };
 
 export default function BookingRequestPage() {
@@ -102,6 +103,8 @@ export default function BookingRequestPage() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-50">
+      <LoadingOverlay show={accept.isPending} message="Accepting booking ..." />
+
       <div className="bg-gradient-to-br from-primary-700 to-primary-900 px-5 pb-20 pt-10 text-white">
         <div className="flex items-center gap-2">
           <Clock className="h-5 w-5" />
@@ -137,9 +140,14 @@ export default function BookingRequestPage() {
         {/* Booking Card */}
         <div className="rounded-2xl bg-white p-5 shadow-lg">
           <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 text-primary-600">
-              <User className="h-6 w-6" />
-            </div>
+            <Avatar
+              name={
+                [offer.passenger?.firstName, offer.passenger?.lastName].filter(Boolean).join(" ") ||
+                "Passenger"
+              }
+              src={offer.passenger?.avatarUrl}
+              size="lg"
+            />
             <div className="flex-1">
               <p className="font-semibold text-gray-800">
                 {[offer.passenger?.firstName, offer.passenger?.lastName].filter(Boolean).join(" ") || "Passenger"}

@@ -112,6 +112,7 @@ export class AuthService {
       ...(dto.firstName !== undefined ? { firstName: dto.firstName } : {}),
       ...(dto.lastName !== undefined ? { lastName: dto.lastName } : {}),
       ...(dto.phone !== undefined ? { phone: dto.phone } : {}),
+      ...(dto.avatarUrl !== undefined ? { avatarUrl: dto.avatarUrl } : {}),
     };
 
     if (user.role === UserRole.DRIVER && user.driver) {

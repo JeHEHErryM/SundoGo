@@ -5,6 +5,7 @@ import { useBookingStore } from "../../stores/booking.store";
 import { Phone, AlertTriangle, Navigation, Loader2 } from "lucide-react";
 import Map from "../../Map";
 import api from "@/lib/api";
+import { Avatar } from "@/components/shared";
 import { getSocket, BOOKING_EVENTS } from "@/lib/socket";
 import type { ApiResponse } from "@sundogo/types";
 import { BookingStatus } from "@sundogo/types";
@@ -116,9 +117,7 @@ export default function ActiveTripPage() {
         {/* Driver card */}
         <div className="bg-white border border-slate-200 rounded-2xl p-4">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-primary-100 rounded-full flex items-center justify-center text-lg font-bold text-primary-600">
-              {driverInfo.name.charAt(0)}
-            </div>
+            <Avatar name={driverInfo.name} src={driverInfo.avatar} size="lg" />
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-bold text-slate-900">{driverInfo.name}</h3>
               <p className="text-xs text-slate-500">{driverInfo.vehicleType} • {driverInfo.plateNumber}</p>

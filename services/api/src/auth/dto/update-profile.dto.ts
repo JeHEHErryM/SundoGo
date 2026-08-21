@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MinLength } from 'class-validator';
+import { IsString, IsOptional, MinLength, MaxLength } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsString()
@@ -14,4 +14,10 @@ export class UpdateProfileDto {
   @IsString()
   @IsOptional()
   phone?: string;
+
+  /** Profile photo as a data URL (resized client-side). Send null to remove. */
+  @IsString()
+  @MaxLength(1_500_000)
+  @IsOptional()
+  avatarUrl?: string | null;
 }
