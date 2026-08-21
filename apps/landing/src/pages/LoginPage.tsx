@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { AuthLayout, LoginForm } from '@sundogo/auth';
 import api from '../lib/api';
 
-const PASSENGER_APP = import.meta.env.VITE_PASSENGER_URL || 'https://passenger-alpha.vercel.app';
-const DRIVER_APP = import.meta.env.VITE_DRIVER_URL || 'https://driver-five-teal.vercel.app';
-const ADMIN_APP = import.meta.env.VITE_ADMIN_URL || 'https://admin-lime-rho.vercel.app';
+const PASSENGER_APP = import.meta.env.VITE_PASSENGER_URL || 'https://passenger-alpha-iota.vercel.app';
+const DRIVER_APP = import.meta.env.VITE_DRIVER_URL || 'https://driver-five-teal-vert.vercel.app';
+const ADMIN_APP = import.meta.env.VITE_ADMIN_URL || 'https://admin-lime-rho-swart.vercel.app';
 
 export default function LoginPage() {
   const navigate = useNavigate();

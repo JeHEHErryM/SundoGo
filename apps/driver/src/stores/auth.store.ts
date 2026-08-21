@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import type { Driver, Vehicle } from "@sundogo/types";
 
 interface AuthState {
@@ -14,34 +13,66 @@ interface AuthState {
   consumeUrlToken: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      token: null,
-      vehicle: null,
-      isAuthenticated: false,
-      login: (user, token, vehicle) =>
-        set({ user, token, vehicle: vehicle ?? null, isAuthenticated: true }),
-      logout: () =>
-        set({ user: null, token: null, vehicle: null, isAuthenticated: false }),
-      setUser: (user) => set({ user }),
-      setVehicle: (vehicle) => set({ vehicle }),
-      consumeUrlToken: () => {
-        const params = new URLSearchParams(window.location.search);
-        const token = params.get("token");
-        const userStr = params.get("user");
-        if (token && userStr) {
-          try {
-            const user = JSON.parse(userStr) as Driver;
-            set({ user, token, isAuthenticated: true });
-            window.history.replaceState({}, "", window.location.pathname);
-          } catch {
-            // ignore
-          }
-        }
-      },
-    }),
-    { name: "driver-auth" }
-  )
-);
+export const useAuthStore = create<AuthState>((set) => ({
+  user: (() => {
+    try {
+      const raw = localStorage.getItem("driver_user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })(),
+  token: localStorage.getItem("driver_token"),
+  vehicle: (() => {
+    try {
+      const raw = localStorage.getItem("driver_vehicle");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  })(),
+  isAuthenticated: !!localStorage.getItem("driver_token"),
+
+  login: (user, token, vehicle) => {
+    localStorage.setItem("driver_token", token);
+    localStorage.setItem("driver_user", JSON.stringify(user));
+    if (vehicle) {
+      localStorage.setItem("driver_vehicle", JSON.stringify(vehicle));
+    }
+    set({ user, token, vehicle: vehicle ?? null, isAuthenticated: true });
+  },
+
+  logout: () => {
+    localStorage.removeItem("driver_token");
+    localStorage.removeItem("driver_user");
+    localStorage.removeItem("driver_vehicle");
+    set({ user: null, token: null, vehicle: null, isAuthenticated: false });
+  },
+
+  setUser: (user) => {
+    localStorage.setItem("driver_user", JSON.stringify(user));
+    set({ user });
+  },
+
+  setVehicle: (vehicle) => {
+    localStorage.setItem("driver_vehicle", JSON.stringify(vehicle));
+    set({ vehicle });
+  },
+
+  consumeUrlToken: () => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const userStr = params.get("user");
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr) as Driver;
+        localStorage.setItem("driver_token", token);
+        localStorage.setItem("driver_user", userStr);
+        set({ user, token, isAuthenticated: true });
+        window.history.replaceState({}, "", window.location.pathname);
+      } catch {
+        // ignore
+      }
+    }
+  },
+}));

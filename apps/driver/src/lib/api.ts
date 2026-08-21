@@ -6,16 +6,9 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const stored = localStorage.getItem("driver-auth");
-  if (stored) {
-    try {
-      const { state } = JSON.parse(stored) as { state: { token: string | null } };
-      if (state.token) {
-        config.headers.Authorization = `Bearer ${state.token}`;
-      }
-    } catch {
-      // ignore
-    }
+  const token = localStorage.getItem("driver_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -24,7 +17,9 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem("driver-auth");
+      localStorage.removeItem("driver_token");
+      localStorage.removeItem("driver_user");
+      localStorage.removeItem("driver_vehicle");
       window.location.href = "https://sundo-go.vercel.app/login";
     }
     return Promise.reject(err);
