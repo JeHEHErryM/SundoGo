@@ -12,11 +12,15 @@
   },
   "dependencies": {
     "@sundogo/auth": "workspace:*",
+    "@sundogo/config": "workspace:*",
+    "@sundogo/types": "workspace:*",
+    "@tanstack/react-query": "^5.62.0",
     "axios": "^1.7.9",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.1.0"
+    "react-router-dom": "^7.1.0",
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",

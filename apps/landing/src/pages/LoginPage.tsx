@@ -1,14 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthLayout, LoginForm } from '@sundogo/auth';
-import api from '../lib/api';
-
-const PASSENGER_APP = import.meta.env.VITE_PASSENGER_URL || 'https://passenger-alpha-iota.vercel.app';
-const DRIVER_APP = import.meta.env.VITE_DRIVER_URL || 'https://driver-five-teal-vert.vercel.app';
-const ADMIN_APP = import.meta.env.VITE_ADMIN_URL || 'https://admin-lime-rho-swart.vercel.app';
+import { useAuthStore } from '@/stores/auth.store';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const login = useAuthStore((s) => s.login);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -16,21 +13,13 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const res = await api.post('/api/auth/login', { email, password });
-      const { user, accessToken } = res.data;
-
+      const { role } = await login(email, password);
       const roleRedirects: Record<string, string> = {
-        PASSENGER: PASSENGER_APP,
-        DRIVER: DRIVER_APP,
-        ADMIN: ADMIN_APP,
+        PASSENGER: '/user/passenger',
+        DRIVER: '/user/driver',
+        ADMIN: '/user/admin',
       };
-
-      const redirectBase = roleRedirects[user.role] || PASSENGER_APP;
-      const params = new URLSearchParams({
-        token: accessToken,
-        user: JSON.stringify(user),
-      });
-      window.location.href = `${redirectBase}?${params.toString()}`;
+      navigate(roleRedirects[role] || '/user/passenger');
     } catch (err: unknown) {
       const message =
         err instanceof Error
