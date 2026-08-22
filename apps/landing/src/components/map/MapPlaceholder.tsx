@@ -28,7 +28,7 @@ export default function MapPlaceholder({
   showRoute = true,
 }: MapProps) {
   return (
-    <div className={`relative overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 ${className}`}>
+    <div className={`absolute inset-0 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 ${className}`}>
       {/* Grid pattern background */}
       <div className="absolute inset-0 opacity-[0.15]" style={{
         backgroundImage: `

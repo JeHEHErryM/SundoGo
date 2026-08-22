@@ -25,12 +25,13 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   async getProfile(@CurrentUser() user: any) {
-    return user;
+    return { success: true, data: user };
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('profile')
   async updateProfile(@CurrentUser() user: any, @Body() dto: UpdateProfileDto) {
-    return this.authService.updateProfile(user.id, dto);
+    const data = await this.authService.updateProfile(user.userId, dto);
+    return { success: true, data };
   }
 }

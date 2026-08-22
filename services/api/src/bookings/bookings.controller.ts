@@ -66,7 +66,7 @@ export class BookingsController {
 
   @Post(':id/cancel')
   async cancel(@Param('id') id: string, @CurrentUser() user: any, @Body('reason') reason?: string) {
-    const userId = user.id;
+    const userId = user.userId;
     const data = await this.bookingsService.cancelBooking(id, userId, reason);
     return { success: true, data };
   }
@@ -91,7 +91,7 @@ export class BookingsController {
   @UseGuards(RolesGuard)
   @Roles(UserRole.DRIVER)
   async updateStatus(@Param('id') id: string, @Body() dto: UpdateStatusDto, @CurrentUser() user: any) {
-    const data = await this.bookingsService.updateStatus(id, dto.status, user.id, user.driverId);
+    const data = await this.bookingsService.updateStatus(id, dto.status, user.userId, user.driverId);
     return { success: true, data };
   }
 }

@@ -200,5 +200,5 @@ export default function MapboxMap({
     };
   }, [styleReady, pickup, destination, driverLocation, showRoute]);
 
-  return <div ref={containerRef} className={className} />;
+  return <div ref={containerRef} className={`absolute inset-0 overflow-hidden ${className}`} />;
 }

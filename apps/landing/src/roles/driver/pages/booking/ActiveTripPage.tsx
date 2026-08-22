@@ -96,7 +96,6 @@ export default function ActiveTripPage() {
               : null
           }
           driverLocation={driverPos}
-          className="w-full h-full"
           showRoute
         />
 

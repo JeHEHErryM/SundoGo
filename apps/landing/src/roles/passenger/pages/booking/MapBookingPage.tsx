@@ -104,7 +104,6 @@ export default function MapBookingPage() {
         <Map
           pickup={pickup}
           destination={destination}
-          className="w-full h-full"
           showRoute={!!pickup && !!destination}
           onSelect={(!pickup || !destination) ? handleMapSelect : undefined}
         />

@@ -116,7 +116,7 @@ export default function DriverAcceptedPage() {
     <div className="min-h-dvh flex flex-col bg-white">
       {/* Map */}
       <div className="relative h-[45dvh] shrink-0">
-        <Map pickup={pickup} className="w-full h-full" />
+         <Map pickup={pickup} />
       </div>
 
       {/* Driver info panel */}

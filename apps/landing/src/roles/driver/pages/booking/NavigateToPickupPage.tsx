@@ -85,7 +85,6 @@ export default function NavigateToPickupPage() {
               : null
           }
           driverLocation={driverPos}
-          className="w-full h-full"
           showRoute
         />
 

@@ -85,7 +85,6 @@ export default function ActiveTripPage() {
         <Map
           pickup={pickup}
           destination={destination}
-          className="w-full h-full"
           showRoute
         />
       </div>
