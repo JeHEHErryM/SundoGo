@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useBookingStore } from "../../stores/booking.store";
@@ -8,14 +8,14 @@ import {
   RotateCcw,
 } from "lucide-react";
 import Map from "../../Map";
-import { reverseGeocode } from "@/lib/geocode";
+import { reverseGeocode, searchPlaces } from "@/lib/geocode";
 import api from "@/lib/api";
 import { usePassengerGeolocation } from "../../hooks/usePassengerGeolocation";
 import type { ApiResponse } from "@sundogo/types";
 import type { AvailableDriver } from "../../Map";
 
 // Mamburao, Occidental Mindoro — service area center.
-const MAMBURAO_CENTER = { lat: 13.1184, lng: 120.6106 };
+const MAMBURAO_CENTER = { lat: 13.22, lng: 120.59 };
 
 function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const earthRadiusKm = 6371;
@@ -41,6 +41,7 @@ export default function MapBookingPage() {
   const [now, setNow] = useState(() => new Date());
   const [resetSignal, setResetSignal] = useState(0);
   const userLocation = usePassengerGeolocation();
+  const deferredSearch = useDeferredValue(search);
 
   const { data: availableDrivers = [] } = useQuery({
     queryKey: ["passenger", "available-drivers", "mamburao-default"],
@@ -62,6 +63,13 @@ export default function MapBookingPage() {
       }));
     },
     refetchInterval: 10000,
+  });
+
+  const { data: placeSuggestions = [], isFetching: searchingPlaces } = useQuery({
+    queryKey: ["mapbox", "places", deferredSearch, userLocation?.lat, userLocation?.lng],
+    queryFn: () => searchPlaces(deferredSearch, userLocation ?? MAMBURAO_CENTER),
+    enabled: deferredSearch.trim().length >= 2,
+    staleTime: 30000,
   });
 
   useEffect(() => {
@@ -123,6 +131,10 @@ export default function MapBookingPage() {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocating(false);
+        if (!Number.isFinite(pos.coords.latitude) || !Number.isFinite(pos.coords.longitude)) {
+          setLocationError("Could not read your device location.");
+          return;
+        }
         const loc = {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
@@ -137,6 +149,7 @@ export default function MapBookingPage() {
       },
       () => {
         setLocating(false);
+        showToast("Location permission unavailable. Using Mamburao town center.");
         // Fall back to the Mamburao town center when permission is denied.
         const loc = {
           ...MAMBURAO_CENTER,
@@ -157,6 +170,17 @@ export default function MapBookingPage() {
     if (!search.trim()) return;
     // Approximate point at the town center until map selection is available.
     setDestination({ ...MAMBURAO_CENTER, address: search.trim() });
+  };
+
+  const selectSuggestion = (place: { name: string; lat: number; lng: number }) => {
+    const point = { ...place, address: place.name };
+    if (tab === "pickup") {
+      setPickup(point);
+      setTab("destination");
+    } else {
+      setDestination(point);
+    }
+    setSearch("");
   };
 
   const handleConfirm = () => {
@@ -295,6 +319,43 @@ export default function MapBookingPage() {
           </div>
         </div>
 
+        {isFullscreen && ((!pickup && tab === "pickup") || (!destination && tab === "destination")) && (
+          <div className="absolute inset-x-3 top-44 z-10 sm:inset-x-5 sm:top-28">
+            <div className="relative">
+              <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && tab === "destination") confirmDestination(); }}
+                placeholder={tab === "pickup" ? "Search pickup, address, or place" : "Search destination, address, or place"}
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white/95 pl-10 pr-4 text-sm shadow-lg outline-none backdrop-blur placeholder:text-slate-400 focus:border-primary-500"
+                autoFocus
+              />
+              {search.trim().length >= 2 && (
+                <div className="absolute inset-x-0 top-12 max-h-56 overflow-y-auto rounded-xl border border-slate-100 bg-white shadow-xl">
+                  {searchingPlaces ? (
+                    <div className="flex items-center gap-2 px-4 py-3 text-xs text-slate-500"><Loader2 size={14} className="animate-spin" /> Searching places...</div>
+                  ) : placeSuggestions.length > 0 ? (
+                    placeSuggestions.map((place) => (
+                      <button
+                        key={`${place.lng}-${place.lat}-${place.name}`}
+                        onClick={() => selectSuggestion(place)}
+                        className="flex w-full items-start gap-3 border-b border-slate-50 px-4 py-3 text-left last:border-0 hover:bg-slate-50"
+                      >
+                        <MapPin size={15} className="mt-0.5 shrink-0 text-primary-600" />
+                        <span className="text-sm text-slate-700">{place.name}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="px-4 py-3 text-xs text-slate-500">No nearby places found.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {toast && (
           <div className="absolute bottom-24 left-1/2 z-20 -translate-x-1/2 rounded-xl bg-slate-900 px-4 py-3 text-center text-xs font-semibold text-white shadow-xl sm:bottom-28">
             {toast}
@@ -400,6 +461,26 @@ export default function MapBookingPage() {
               className="w-full h-11 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:bg-white focus:border-primary-500 transition-colors outline-none"
               autoFocus
             />
+            {search.trim().length >= 2 && (
+              <div className="absolute inset-x-0 top-12 z-20 max-h-56 overflow-y-auto rounded-xl border border-slate-100 bg-white shadow-xl">
+                {searchingPlaces ? (
+                  <div className="flex items-center gap-2 px-4 py-3 text-xs text-slate-500"><Loader2 size={14} className="animate-spin" /> Searching places...</div>
+                ) : placeSuggestions.length > 0 ? (
+                  placeSuggestions.map((place) => (
+                    <button
+                      key={`${place.lng}-${place.lat}-${place.name}`}
+                      onClick={() => selectSuggestion(place)}
+                      className="flex w-full items-start gap-3 border-b border-slate-50 px-4 py-3 text-left last:border-0 hover:bg-slate-50"
+                    >
+                      <MapPin size={15} className="mt-0.5 shrink-0 text-primary-600" />
+                      <span className="text-sm text-slate-700">{place.name}</span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-4 py-3 text-xs text-slate-500">No nearby places found.</p>
+                )}
+              </div>
+            )}
           </div>
         ) : null}
 
