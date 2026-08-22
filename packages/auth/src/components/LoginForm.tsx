@@ -38,6 +38,9 @@ export function LoginForm({ onSubmit, registerPath = '/register', isLoading, err
             <input
               type="email"
               required
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"

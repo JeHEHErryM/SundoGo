@@ -30,6 +30,9 @@ export function PassengerRegisterStep1({ data, onUpdate }: Props) {
           <input
             type="email"
             required
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             value={data.email}
             onChange={(e) => handleChange('email', e.target.value)}
             placeholder="you@example.com"

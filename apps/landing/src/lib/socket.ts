@@ -32,4 +32,5 @@ export const BOOKING_EVENTS = {
   TRIP_STARTED: "trip:started",
   TRIP_COMPLETED: "trip:completed",
   CANCELLED: "booking:cancelled",
+  EMERGENCY: "emergency:alert",
 } as const;

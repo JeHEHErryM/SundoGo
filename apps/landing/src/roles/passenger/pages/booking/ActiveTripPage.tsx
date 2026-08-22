@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useBookingStore } from "../../stores/booking.store";
@@ -7,6 +7,7 @@ import Map from "../../Map";
 import api from "@/lib/api";
 import { Avatar } from "@/components/shared";
 import { getSocket, BOOKING_EVENTS } from "@/lib/socket";
+import EmergencySheet from "../../components/EmergencySheet";
 import type { ApiResponse } from "@sundogo/types";
 import { BookingStatus } from "@sundogo/types";
 
@@ -26,6 +27,7 @@ export default function ActiveTripPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { currentBooking, pickup, destination, driverInfo, clearBooking } = useBookingStore();
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
 
   const { data: booking, isLoading } = useQuery({
     queryKey: ["passenger", "booking", currentBooking],
@@ -141,7 +143,10 @@ export default function ActiveTripPage() {
         )}
 
         {/* Safety */}
-        <button className="w-full flex items-center gap-3 p-3 bg-red-50 rounded-xl hover:bg-red-100 transition-colors">
+        <button
+          onClick={() => setEmergencyOpen(true)}
+          className="w-full flex items-center gap-3 p-3 bg-red-50 rounded-xl hover:bg-red-100 transition-colors"
+        >
           <div className="w-9 h-9 bg-red-100 rounded-lg flex items-center justify-center">
             <AlertTriangle size={16} className="text-red-600" />
           </div>
@@ -151,6 +156,8 @@ export default function ActiveTripPage() {
           </div>
         </button>
       </div>
+
+      <EmergencySheet open={emergencyOpen} onClose={() => setEmergencyOpen(false)} />
     </div>
   );
 }

@@ -1,13 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Navigation, Loader2, Phone } from "lucide-react";
+import { Navigation, Loader2, Phone, Siren } from "lucide-react";
 import api from "@/lib/api";
 import Map from "@/components/map/Map";
 import { useDriverStore } from "@/stores/driver.store";
 import { useActiveBooking } from "@/roles/driver/hooks/useActiveBooking";
 import { useDriverGeolocation } from "@/roles/driver/hooks/useDriverGeolocation";
 import { Avatar, LoadingOverlay } from "@/components/shared";
+import { getSocket, BOOKING_EVENTS } from "@/lib/socket";
 import { BookingStatus } from "@sundogo/types";
 
 export default function ActiveTripPage() {
@@ -15,12 +16,37 @@ export default function ActiveTripPage() {
   const queryClient = useQueryClient();
   const acceptBooking = useDriverStore((s) => s.acceptBooking);
   const driverPos = useDriverGeolocation();
+  const [emergencyAlert, setEmergencyAlert] = useState<{
+    passengerName: string;
+    passengerPhone: string;
+    message: string | null;
+  } | null>(null);
 
   const { data: booking, isLoading } = useActiveBooking();
 
   useEffect(() => {
     if (booking) acceptBooking(booking);
   }, [booking, acceptBooking]);
+
+  // Listen for passenger emergency alerts.
+  useEffect(() => {
+    const socket = getSocket();
+    const onEmergency = (payload: {
+      passengerName?: string;
+      passengerPhone?: string;
+      message?: string | null;
+    }) => {
+      setEmergencyAlert({
+        passengerName: payload.passengerName ?? "Your passenger",
+        passengerPhone: payload.passengerPhone ?? "",
+        message: payload.message ?? null,
+      });
+    };
+    socket.on(BOOKING_EVENTS.EMERGENCY, onEmergency);
+    return () => {
+      socket.off(BOOKING_EVENTS.EMERGENCY, onEmergency);
+    };
+  }, []);
 
   // Route guard: only meaningful while the trip is in progress.
   useEffect(() => {
@@ -87,6 +113,41 @@ export default function ActiveTripPage() {
 
       {/* Bottom Sheet */}
       <div className="safe-area-pb mx-auto -mt-6 w-full max-w-lg flex-1 rounded-t-3xl bg-white px-5 pb-6 pt-6 shadow-lg">
+        {/* Emergency alert banner */}
+        {emergencyAlert && (
+          <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100">
+                <Siren size={20} className="text-red-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-red-900">
+                  Emergency alert from {emergencyAlert.passengerName}
+                </p>
+                {emergencyAlert.message && (
+                  <p className="mt-1 text-sm text-red-700">&ldquo;{emergencyAlert.message}&rdquo;</p>
+                )}
+                {emergencyAlert.passengerPhone && (
+                  <a
+                    href={`tel:${emergencyAlert.passengerPhone}`}
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
+                  >
+                    <Phone size={13} />
+                    Call passenger
+                  </a>
+                )}
+              </div>
+              <button
+                onClick={() => setEmergencyAlert(null)}
+                aria-label="Dismiss alert"
+                className="text-xs font-semibold text-red-500 hover:text-red-700"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Passenger */}
         <div className="mb-4 flex items-center gap-3 rounded-xl bg-gray-50 p-4">
           <Avatar

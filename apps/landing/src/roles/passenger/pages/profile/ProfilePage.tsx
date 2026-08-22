@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/auth.store";
 import {
   User, Mail, Phone, LogOut, Bell, Loader2, CheckCircle2, Camera,
+  ShieldAlert, Trash2, Plus,
 } from "lucide-react";
 import api from "@/lib/api";
 import { fileToResizedDataUrl } from "@/lib/image";
@@ -18,6 +19,13 @@ interface ProfileUser {
   driver?: { firstName?: string; lastName?: string; phone?: string } | null;
 }
 
+interface EmergencyContact {
+  id: string;
+  name: string;
+  phone: string;
+  relationship: string;
+}
+
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, logout, setUser } = useAuthStore();
@@ -30,6 +38,52 @@ export default function ProfilePage() {
   const [phone, setPhone] = useState(roleProfile?.phone ?? "");
   const [saved, setSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const queryClient = useQueryClient();
+  const [addingContact, setAddingContact] = useState(false);
+  const [contactName, setContactName] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactRelationship, setContactRelationship] = useState("");
+
+  const contactsQuery = useQuery({
+    queryKey: ["passenger", "emergency-contacts"],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<EmergencyContact[]>>(
+        "/api/passengers/emergency-contacts",
+      );
+      return data.data ?? [];
+    },
+  });
+
+  const addContact = useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post<ApiResponse<EmergencyContact>>(
+        "/api/passengers/emergency-contacts",
+        {
+          name: contactName.trim(),
+          phone: contactPhone.trim(),
+          relationship: contactRelationship.trim() || "Contact",
+        },
+      );
+      return data.data!;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["passenger", "emergency-contacts"] });
+      setAddingContact(false);
+      setContactName("");
+      setContactPhone("");
+      setContactRelationship("");
+    },
+  });
+
+  const removeContact = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/api/passengers/emergency-contacts/${id}`);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["passenger", "emergency-contacts"] });
+    },
+  });
 
   const displayName =
     [roleProfile?.firstName, roleProfile?.lastName].filter(Boolean).join(" ") ||
@@ -229,6 +283,128 @@ export default function ProfilePage() {
                 <p className="text-xs text-slate-400">Trip updates and alerts</p>
               </div>
             </button>
+          </div>
+        </div>
+
+        {/* Emergency contacts */}
+        <div>
+          <div className="flex items-center justify-between mb-2 px-1">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Emergency Contacts
+            </h3>
+            <button
+              onClick={() => setAddingContact((v) => !v)}
+              className="flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-700"
+            >
+              <Plus size={14} />
+              Add
+            </button>
+          </div>
+
+          {addingContact && (
+            <div className="bg-white rounded-2xl p-4 border border-slate-100 space-y-3 mb-2">
+              <div>
+                <label className="text-xs text-slate-500">Name</label>
+                <input
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  placeholder="Juan Dela Cruz"
+                  className="mt-1 w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary-500 focus:bg-white outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-500">Phone</label>
+                  <input
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    inputMode="tel"
+                    placeholder="09171234567"
+                    className="mt-1 w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary-500 focus:bg-white outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500">Relationship</label>
+                  <input
+                    value={contactRelationship}
+                    onChange={(e) => setContactRelationship(e.target.value)}
+                    placeholder="Sister"
+                    className="mt-1 w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-primary-500 focus:bg-white outline-none"
+                  />
+                </div>
+              </div>
+              {addContact.isError && (
+                <p className="text-xs text-danger-600">Could not add contact. Please try again.</p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setAddingContact(false)}
+                  className="flex-1 h-10 bg-slate-100 text-slate-600 font-medium rounded-lg text-sm hover:bg-slate-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => addContact.mutate()}
+                  disabled={addContact.isPending || !contactName.trim() || !contactPhone.trim()}
+                  className="flex-1 h-10 bg-primary-600 text-white font-medium rounded-lg text-sm hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {addContact.isPending && <Loader2 size={14} className="animate-spin" />}
+                  Save Contact
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+            {contactsQuery.isLoading ? (
+              <div className="flex justify-center py-5">
+                <Loader2 size={18} className="animate-spin text-slate-400" />
+              </div>
+            ) : (contactsQuery.data ?? []).length === 0 ? (
+              <div className="flex items-center gap-3 px-4 py-4">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-red-50 text-red-600">
+                  <ShieldAlert size={16} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-900">No emergency contacts yet</p>
+                  <p className="text-xs text-slate-400">
+                    We&apos;ll alert these people if you trigger an emergency during a trip
+                  </p>
+                </div>
+              </div>
+            ) : (
+              (contactsQuery.data ?? []).map((contact) => (
+                <div
+                  key={contact.id}
+                  className="flex items-center gap-3 px-4 py-3.5 border-b border-slate-50 last:border-0"
+                >
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-red-50 text-red-600">
+                    <ShieldAlert size={16} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900 truncate">{contact.name}</p>
+                    <p className="text-xs text-slate-400 truncate">
+                      {contact.relationship} • {contact.phone}
+                    </p>
+                  </div>
+                  <a
+                    href={`tel:${contact.phone}`}
+                    aria-label={`Call ${contact.name}`}
+                    className="w-9 h-9 rounded-full flex items-center justify-center bg-primary-50 text-primary-600 hover:bg-primary-100"
+                  >
+                    <Phone size={15} />
+                  </a>
+                  <button
+                    onClick={() => removeContact.mutate(contact.id)}
+                    disabled={removeContact.isPending}
+                    aria-label={`Remove ${contact.name}`}
+                    className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

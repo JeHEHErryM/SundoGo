@@ -55,6 +55,9 @@ export function DriverRegisterStep2({ data, onUpdate }: Props) {
           <input
             type="email"
             required
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             value={data.email}
             onChange={(e) => handleChange('email', e.target.value)}
             placeholder="driver@email.com"
