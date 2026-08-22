@@ -14,17 +14,16 @@ PWA-based local tricycle ride-booking platform for Mamburao, Occidental Mindoro,
 ```
 sundogo/
 ├── apps/
-│   ├── passenger/    # Passenger PWA
-│   ├── driver/       # Driver PWA
-│   └── admin/        # Admin dashboard
+│   └── landing/       # Unified SPA (landing + passenger/driver/admin portals)
 ├── services/
-│   └── api/          # NestJS backend
+│   └── api/           # NestJS backend
 ├── packages/
-│   ├── ui/           # Shared UI components
-│   ├── types/        # Shared TypeScript types
-│   ├── validation/   # Shared validation schemas
-│   └── config/       # Shared configuration
-└── prisma/           # Database schema & migrations
+│   ├── ui/            # Shared UI components
+│   ├── auth/          # Shared auth flows
+│   ├── types/         # Shared TypeScript types
+│   ├── validation/    # Shared validation schemas
+│   └── config/        # Shared configuration
+└── prisma/            # Database schema & migrations (services/api/prisma)
 ```
 
 ## Getting Started

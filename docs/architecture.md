@@ -9,15 +9,14 @@ SundoGo is a PWA-based local tricycle ride-booking platform organized as a pnpm 
 ```
 sundogo/
 ├── apps/
-│   ├── passenger/     # Passenger PWA (React + Vite)
-│   ├── driver/        # Driver PWA (React + Vite)
-│   └── admin/         # Admin PWA (React + Vite)
+│   └── landing/       # Unified SPA (landing + passenger/driver/admin portals)
 ├── services/
 │   └── api/           # Backend API (NestJS)
 ├── packages/
 │   ├── config/        # Shared configuration
 │   ├── types/         # Shared TypeScript types & enums
 │   ├── ui/            # Shared UI components
+│   ├── auth/          # Shared auth flows (login/register forms, layouts)
 │   └── validation/    # Shared validation schemas (Zod/class-validator)
 ├── turbo.json         # Turborepo pipeline config
 └── pnpm-workspace.yaml
@@ -32,7 +31,8 @@ sundogo/
 - **State:** Zustand
 - **Data fetching:** TanStack React Query + Axios
 - **Routing:** React Router 7
-- **PWA:** vite-plugin-pwa
+- **PWA:** vite-plugin-pwa (service worker, manifest, offline precache)
+- **Maps:** Mapbox GL JS
 - **Icons:** Lucide React
 
 ### Backend
@@ -47,18 +47,16 @@ sundogo/
 - **Engine:** PostgreSQL
 - **Migrations:** Prisma Migrate
 
-## Frontend Apps
+## Frontend App (`apps/landing`)
 
-All three PWAs share the same tech stack and follow identical patterns:
+A single unified SPA serves the landing page and all three role portals.
+Routes are role-prefixed and lazily code-split per page:
 
-### Passenger App (`apps/passenger`)
-- Book rides, track drivers, manage emergency contacts, view trip history, leave reviews.
-
-### Driver App (`apps/driver`)
-- Accept/decline bookings, update availability & location, manage vehicle info, view earnings.
-
-### Admin App (`apps/admin`)
-- Dashboard with platform stats, manage passengers/drivers, review driver verifications, manage service areas and pricing.
+- `/` — Marketing landing page
+- `/login`, `/portal` — Unified login and sign-up portal
+- `/user/passenger/*` — Book rides, track drivers, manage emergency contacts, view trip history, leave reviews.
+- `/user/driver/*` — Accept/decline bookings, update availability & location, manage vehicle info, view earnings.
+- `/user/admin/*` — Dashboard with platform stats, manage passengers/drivers, review driver verifications, manage service areas and pricing.
 
 ## Backend API (`services/api`)
 
@@ -85,20 +83,22 @@ NestJS application with modular architecture:
 Socket.IO handles live updates:
 - Driver location broadcasting during trips
 - Booking status change notifications
-- Emergency alerts
+- Emergency alerts (passenger → driver during an active trip)
 
 ## Deployment
 
 ### Frontend → Vercel
-Each PWA is deployed as a separate Vercel project with SPA rewrites configured in per-app `vercel.json` files.
+The unified SPA (`apps/landing`) is deployed as a single Vercel project
+(`sundo-go.vercel.app`) with SPA rewrites configured in `vercel.json`.
 
 ### Backend → Railway
-The NestJS API is deployed on Railway using Nixpacks. The service runs `pnpm --filter @sundogo/api start:prod` and exposes a health check endpoint at `/`.
+The NestJS API is deployed on Railway via Docker. The service runs
+`pnpm --filter @sundogo/api start:prod` and exposes a health check endpoint at `/`.
 
 ### CI/CD
 GitHub Actions runs on push to `master` and PRs:
 1. Checkout code
-2. Install pnpm 9 + Node.js 20
+2. Install pnpm + Node.js 22
 3. `pnpm install --frozen-lockfile`
 4. `pnpm build` (Turborepo)
 5. `pnpm lint` (Turborepo)

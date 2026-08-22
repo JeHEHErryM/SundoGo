@@ -25,6 +25,7 @@ All endpoints return `{ success: boolean, data: any }`.
 | GET | `/api/passengers/emergency-contacts` | Yes (Passenger) | List emergency contacts |
 | POST | `/api/passengers/emergency-contacts` | Yes (Passenger) | Add emergency contact |
 | DELETE | `/api/passengers/emergency-contacts/:id` | Yes (Passenger) | Remove emergency contact |
+| POST | `/api/passengers/emergency-alert` | Yes (Passenger) | Trigger emergency alert during active trip (notifies driver) |
 | GET | `/api/passengers/:id` | Yes (Admin) | Get passenger by ID |
 
 ---
