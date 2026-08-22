@@ -6,7 +6,8 @@ import type { AvailableDriver, MapProps } from "./MapPlaceholder";
 
 const TOKEN = import.meta.env.VITE_MAPBOX_TOKEN as string | undefined;
 // Mamburao, Occidental Mindoro — service area center.
-const DEFAULT_CENTER: [number, number] = [120.6106, 13.1184];
+// Mamburao town fallback when device location is unavailable.
+const DEFAULT_CENTER: [number, number] = [120.59, 13.22];
 const ROUTE_SOURCE = "route";
 const ROUTE_LAYER = "route-line";
 const RADIUS_SOURCE = "search-radius";
@@ -110,6 +111,7 @@ export default function MapboxMap({
   draggableDestination = false,
   onMovePickup,
   onMoveDestination,
+  resetSignal = 0,
   className = "",
   showRoute = true,
   onSelect,
@@ -261,6 +263,18 @@ export default function MapboxMap({
       markersRef.current.availableDrivers.set(driver.id, next);
     });
   }, [pickup, destination, driverLocation, userLocation, availableDrivers, draggablePickup, draggableDestination]);
+
+  // Recenter after GPS arrives and whenever the user presses Reset map.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !styleReady) return;
+    didFitRef.current = false;
+    map.flyTo({
+      center: userLocation ? [userLocation.lng, userLocation.lat] : DEFAULT_CENTER,
+      zoom: userLocation ? 15 : 13,
+      duration: resetSignal === 0 ? 0 : 600,
+    });
+  }, [styleReady, resetSignal]);
 
   useEffect(() => {
     const map = mapRef.current;

@@ -26,6 +26,7 @@ export interface MapProps {
   draggableDestination?: boolean;
   onMovePickup?: (point: LatLng) => void;
   onMoveDestination?: (point: LatLng) => void;
+  resetSignal?: number;
   className?: string;
   showRoute?: boolean;
   /** When provided, taps on the map call back with the tapped coordinates. */

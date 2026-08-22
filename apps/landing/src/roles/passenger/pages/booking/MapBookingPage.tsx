@@ -5,6 +5,7 @@ import { useBookingStore } from "../../stores/booking.store";
 import {
   ArrowLeft, MapPin, Navigation, Search, X, LocateFixed, Loader2, Maximize2,
   Minimize2, Minus, Plus, Users, Clock3,
+  RotateCcw,
 } from "lucide-react";
 import Map from "../../Map";
 import { reverseGeocode } from "@/lib/geocode";
@@ -38,6 +39,7 @@ export default function MapBookingPage() {
   const [radiusKm, setRadiusKm] = useState(2);
   const [toast, setToast] = useState("");
   const [now, setNow] = useState(() => new Date());
+  const [resetSignal, setResetSignal] = useState(0);
   const userLocation = usePassengerGeolocation();
 
   const { data: availableDrivers = [] } = useQuery({
@@ -173,6 +175,15 @@ export default function MapBookingPage() {
     }
   };
 
+  const resetMap = () => {
+    setPickup(null as never);
+    setDestination(null as never);
+    setTab("pickup");
+    setSearch("");
+    setRadiusKm(2);
+    setResetSignal((value) => value + 1);
+  };
+
   return (
     <div className={`${isFullscreen ? "fixed inset-0 z-50" : "min-h-dvh"} flex flex-col bg-white`}>
       {/* Map */}
@@ -187,6 +198,7 @@ export default function MapBookingPage() {
           draggableDestination={!!destination}
           onMovePickup={(point) => void movePoint("pickup", point)}
           onMoveDestination={(point) => void movePoint("destination", point)}
+          resetSignal={resetSignal}
           showRoute={!!pickup && !!destination}
           onSelect={(!pickup || !destination) ? handleMapSelect : undefined}
         />
@@ -199,6 +211,14 @@ export default function MapBookingPage() {
             aria-label="Go back"
           >
             <ArrowLeft size={20} className="text-slate-700" />
+          </button>
+          <button
+            onClick={resetMap}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/95 shadow-lg backdrop-blur hover:bg-white"
+            aria-label="Reset map"
+            title="Reset map"
+          >
+            <RotateCcw size={18} className="text-slate-700" />
           </button>
           <div className="flex min-w-0 flex-1 justify-center gap-2">
             <div className="flex items-center gap-2 rounded-full bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-lg backdrop-blur">
