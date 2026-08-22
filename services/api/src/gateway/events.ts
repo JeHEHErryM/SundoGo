@@ -8,4 +8,5 @@ export const BOOKING_EVENTS = {
   TRIP_STARTED: 'trip:started',
   TRIP_COMPLETED: 'trip:completed',
   BOOKING_CANCELLED: 'booking:cancelled',
+  EMERGENCY_ALERT: 'emergency:alert',
 } as const;

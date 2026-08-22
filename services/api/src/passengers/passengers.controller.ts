@@ -11,6 +11,7 @@ import {
 import { PassengersService } from './passengers.service';
 import { UpdatePassengerDto } from './dto/update-passenger.dto';
 import { CreateEmergencyContactDto } from './dto/create-emergency-contact.dto';
+import { TriggerEmergencyAlertDto } from './dto/trigger-emergency-alert.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -60,6 +61,20 @@ export class PassengersController {
   async removeEmergencyContact(@CurrentUser() user: any, @Param('id') id: string) {
     await this.passengersService.removeEmergencyContact(id);
     return { success: true };
+  }
+
+  @Post('emergency-alert')
+  @UseGuards(JwtAuthGuard)
+  async triggerEmergencyAlert(
+    @CurrentUser() user: any,
+    @Body() dto: TriggerEmergencyAlertDto,
+  ) {
+    const passenger = await this.passengersService.findByUserId(user.userId);
+    const result = await this.passengersService.triggerEmergencyAlert(
+      passenger.id,
+      dto?.message,
+    );
+    return { success: true, data: result };
   }
 
   @Get(':id')

@@ -14,6 +14,9 @@ import { PaymentsModule } from './payments/payments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { GatewayModule } from './gateway/gateway.module';
+import { BookingsModule } from './bookings/bookings.module';
+import { ServiceAreasModule } from './service-areas/service-areas.module';
+import { PricingModule } from './pricing/pricing.module';
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { GatewayModule } from './gateway/gateway.module';
     NotificationsModule,
     ReviewsModule,
     GatewayModule,
+    BookingsModule,
+    ServiceAreasModule,
+    PricingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

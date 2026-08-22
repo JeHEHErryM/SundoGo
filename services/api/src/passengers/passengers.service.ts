@@ -1,12 +1,28 @@
 import { Injectable, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
+import { BookingStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { BookingsGateway } from '../gateway/bookings.gateway';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreatePassengerDto } from './dto/create-passenger.dto';
 import { UpdatePassengerDto } from './dto/update-passenger.dto';
 import { CreateEmergencyContactDto } from './dto/create-emergency-contact.dto';
 
+const ACTIVE_BOOKING_STATUSES = [
+  BookingStatus.REQUESTED,
+  BookingStatus.SEARCHING,
+  BookingStatus.ACCEPTED,
+  BookingStatus.DRIVER_ARRIVING,
+  BookingStatus.DRIVER_ARRIVED,
+  BookingStatus.IN_PROGRESS,
+];
+
 @Injectable()
 export class PassengersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly gateway: BookingsGateway,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   async findByUserId(userId: string) {
     const passenger = await this.prisma.passenger.findUnique({
@@ -69,5 +85,57 @@ export class PassengersService {
 
     await this.prisma.emergencyContact.delete({ where: { id } });
     return { success: true };
+  }
+
+  /**
+   * Raises an emergency alert: notifies the driver of the active booking in
+   * real time (socket + notification) and returns the passenger's emergency
+   * contacts so the client can offer immediate call/SMS actions.
+   */
+  async triggerEmergencyAlert(passengerId: string, message?: string) {
+    const passenger = await this.prisma.passenger.findUnique({
+      where: { id: passengerId },
+      include: { emergencyContacts: true },
+    });
+    if (!passenger) throw new NotFoundException('Passenger profile not found');
+
+    const booking = await this.prisma.booking.findFirst({
+      where: {
+        passengerId,
+        status: { in: ACTIVE_BOOKING_STATUSES },
+      },
+      include: {
+        driver: { include: { user: { select: { id: true } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (booking && booking.driver) {
+      const payload = {
+        bookingId: booking.id,
+        passengerName: `${passenger.firstName} ${passenger.lastName}`.trim(),
+        passengerPhone: passenger.phone,
+        pickupAddress: booking.pickupAddress,
+        destinationAddress: booking.destinationAddress,
+        message: message ?? null,
+        triggeredAt: new Date().toISOString(),
+      };
+
+      this.gateway.emitToBookingRoom(booking.id, 'emergency:alert', payload);
+
+      void this.notifications.create(
+        booking.driver.user.id,
+        'EMERGENCY_ALERT',
+        'Emergency alert',
+        `${passenger.firstName} triggered an emergency alert during your trip.`,
+        payload,
+      );
+    }
+
+    return {
+      contacts: passenger.emergencyContacts,
+      bookingId: booking?.id ?? null,
+      driverNotified: !!booking?.driver,
+    };
   }
 }
