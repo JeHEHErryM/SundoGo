@@ -218,7 +218,7 @@ export default function MapBookingPage() {
   };
 
   return (
-    <div className={`${isFullscreen ? "fixed inset-0 z-50" : "min-h-[calc(100dvh-3.5rem)] overflow-x-hidden"} flex flex-col bg-white`}>
+    <div className={`${isFullscreen ? "fixed inset-0 z-[60] h-[100dvh] max-h-[100dvh] overflow-hidden" : "min-h-[calc(100dvh-3.5rem)] overflow-x-hidden"} flex flex-col bg-white`}>
       {/* Map */}
       <div className={`relative flex-1 ${isFullscreen ? "min-h-0" : "min-h-[40dvh]"}`}>
         <Map
@@ -274,7 +274,7 @@ export default function MapBookingPage() {
           </div>
         </div>
 
-        <div className="absolute left-1/2 top-16 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-lg backdrop-blur sm:top-5">
+        <div className="absolute left-3 top-[3.75rem] z-10 flex items-center gap-2 rounded-full bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-lg backdrop-blur sm:left-1/2 sm:top-5 sm:-translate-x-1/2">
           <Users size={14} className="text-primary-600" />
           {nearbyDrivers.length} nearby
           <span className="hidden items-center gap-1 border-l border-slate-200 pl-2 font-medium text-slate-500 sm:flex">
@@ -283,7 +283,7 @@ export default function MapBookingPage() {
           </span>
         </div>
 
-        <div className="absolute inset-x-3 bottom-4 z-10 flex flex-wrap items-end justify-between gap-2 sm:inset-x-5 sm:bottom-5">
+        <div className={`absolute inset-x-3 z-10 flex flex-wrap items-end justify-between gap-2 sm:inset-x-5 ${isFullscreen ? "bottom-4" : "bottom-20 sm:bottom-5"}`}>
           <div className="rounded-2xl bg-white/95 p-2 shadow-lg backdrop-blur">
             <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
               Search range
@@ -334,7 +334,7 @@ export default function MapBookingPage() {
           </div>
         </div>
 
-        <div className="absolute inset-x-3 top-28 z-10 flex justify-center sm:inset-x-auto sm:left-5 sm:top-20 sm:justify-start">
+        <div className="absolute right-3 top-[3.75rem] z-10 flex justify-end sm:inset-x-auto sm:left-5 sm:right-auto sm:top-20 sm:justify-start">
           <div className="flex gap-1 rounded-xl bg-white/95 p-1 shadow-lg backdrop-blur">
           <button
             onClick={() => setTab("pickup")}
@@ -348,7 +348,7 @@ export default function MapBookingPage() {
         </div>
 
         {isFullscreen && ((!pickup && tab === "pickup") || (!destination && tab === "destination")) && (
-          <div className="absolute inset-x-3 top-44 z-10 sm:inset-x-5 sm:top-28">
+          <div className="absolute inset-x-3 top-28 z-10 sm:inset-x-5 sm:top-36">
             <div className="relative">
               <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
