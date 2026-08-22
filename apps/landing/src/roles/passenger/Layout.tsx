@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Outlet, NavLink, useLocation, Link } from "react-router-dom";
 import { Home, Car, Clock, User, Bell } from "lucide-react";
 import { useAuthStore } from "@/stores/auth.store";
@@ -14,10 +14,26 @@ const navItems = [
 export default function Layout() {
   const location = useLocation();
   const loadFromStorage = useAuthStore((s) => s.loadFromStorage);
+  const [navigationMode, setNavigationMode] = useState<"visible" | "translucent" | "hidden">(
+    () => (localStorage.getItem("sundogo_navigation_mode") as "visible" | "translucent" | "hidden") || "visible",
+  );
 
   useEffect(() => {
     loadFromStorage();
   }, [loadFromStorage]);
+
+  useEffect(() => {
+    const syncNavigationMode = () => {
+      const mode = localStorage.getItem("sundogo_navigation_mode");
+      if (mode === "visible" || mode === "translucent" || mode === "hidden") setNavigationMode(mode);
+    };
+    window.addEventListener("sundogo-navigation-mode", syncNavigationMode);
+    window.addEventListener("storage", syncNavigationMode);
+    return () => {
+      window.removeEventListener("sundogo-navigation-mode", syncNavigationMode);
+      window.removeEventListener("storage", syncNavigationMode);
+    };
+  }, []);
 
   const hideNav = ["/user/passenger/login", "/user/passenger/register"].includes(location.pathname) ||
     location.pathname.startsWith("/user/passenger/booking/searching") ||
@@ -49,8 +65,12 @@ export default function Layout() {
         </Suspense>
       </main>
 
-      {!hideNav && (
-        <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 z-50 safe-area-pb">
+      {!hideNav && navigationMode !== "hidden" && (
+        <nav className={`fixed bottom-0 inset-x-0 z-50 border-t border-slate-200 safe-area-pb ${
+          navigationMode === "translucent"
+            ? "bg-white/65 shadow-lg backdrop-blur-xl supports-[backdrop-filter]:bg-white/50"
+            : "bg-white"
+        }`}>
           <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
             {navItems.map(({ to, icon: Icon, label }) => {
               const isActive =
