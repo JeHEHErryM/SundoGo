@@ -8,6 +8,7 @@ import {
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth.store";
 import { useDriverStore } from "@/stores/driver.store";
+import { useDriverGeolocation } from "@/roles/driver/hooks/useDriverGeolocation";
 import { Skeleton, formatCurrency, useCountUp, Avatar, LoadingOverlay } from "@/components/shared";
 import type { ApiResponse } from "@sundogo/types";
 
@@ -23,6 +24,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const { isOnline, currentBooking, goOnline, goOffline } = useDriverStore();
+  useDriverGeolocation();
 
   const { data: dashboard, isLoading } = useQuery({
     queryKey: ["driver", "dashboard"],
