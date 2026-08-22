@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { Outlet, NavLink, useLocation, Link } from "react-router-dom";
-import { Home, Car, Clock, User, Bell } from "lucide-react";
+import { Home, Car, Clock, User, Bell, PanelBottom } from "lucide-react";
 import { useAuthStore } from "@/stores/auth.store";
 
 const navItems = [
@@ -42,14 +42,30 @@ export default function Layout() {
     location.pathname.startsWith("/user/passenger/booking/completed") ||
     location.pathname.startsWith("/user/passenger/booking/payment");
 
+  const cycleNavigationMode = () => {
+    const next = navigationMode === "visible" ? "translucent" : navigationMode === "translucent" ? "hidden" : "visible";
+    setNavigationMode(next);
+    localStorage.setItem("sundogo_navigation_mode", next);
+    window.dispatchEvent(new Event("sundogo-navigation-mode"));
+  };
+
   return (
     <div className="min-h-dvh flex flex-col bg-slate-50">
       <header className="sticky top-0 z-40 bg-white border-b border-slate-200">
         <div className="flex items-center h-14 px-4">
           <Link to="/" className="flex items-center" aria-label="SundoGo home">
             <img src="/SundoGo_Logo.svg" alt="SundoGo" className="h-9 w-auto" />
-            <span className="ml-2 text-base font-bold text-slate-900">SundoGo</span>
+            <span className="ml-2 hidden text-base font-bold text-slate-900 sm:inline">SundoGo</span>
           </Link>
+          <button
+            onClick={cycleNavigationMode}
+            className="ml-auto flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 sm:w-auto sm:gap-2 sm:rounded-lg sm:px-3"
+            aria-label="Toggle bottom navigation"
+            title={`Bottom navigation: ${navigationMode}`}
+          >
+            <PanelBottom size={17} />
+            <span className="hidden text-xs font-semibold capitalize sm:inline">{navigationMode}</span>
+          </button>
         </div>
       </header>
 

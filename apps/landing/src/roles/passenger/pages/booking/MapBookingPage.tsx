@@ -5,7 +5,7 @@ import { useBookingStore } from "../../stores/booking.store";
 import {
   ArrowLeft, MapPin, Navigation, Search, X, LocateFixed, Loader2, Maximize2,
   Minimize2, Minus, Plus, Users, Clock3,
-  RotateCcw, CircleHelp, PanelBottom,
+  RotateCcw, CircleHelp, Gauge,
 } from "lucide-react";
 import Map from "../../Map";
 import { reverseGeocode, searchPlaces } from "@/lib/geocode";
@@ -40,9 +40,7 @@ export default function MapBookingPage() {
   const [now, setNow] = useState(() => new Date());
   const [resetSignal, setResetSignal] = useState(0);
   const [tutorialOpen, setTutorialOpen] = useState(false);
-  const [navigationMode, setNavigationMode] = useState<"visible" | "translucent" | "hidden">(
-    () => (localStorage.getItem("sundogo_navigation_mode") as "visible" | "translucent" | "hidden") || "visible",
-  );
+  const [rangeExpanded, setRangeExpanded] = useState(false);
   const userLocation = usePassengerGeolocation();
   const deferredSearch = useDeferredValue(search);
 
@@ -88,14 +86,6 @@ export default function MapBookingPage() {
   const showToast = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(""), 2800);
-  };
-
-  const cycleNavigationMode = () => {
-    const next = navigationMode === "visible" ? "translucent" : navigationMode === "translucent" ? "hidden" : "visible";
-    setNavigationMode(next);
-    localStorage.setItem("sundogo_navigation_mode", next);
-    window.dispatchEvent(new Event("sundogo-navigation-mode"));
-    showToast(next === "hidden" ? "Bottom navigation hidden" : next === "translucent" ? "Bottom navigation translucent" : "Bottom navigation visible");
   };
 
   const changeRadius = (delta: number) => {
@@ -284,24 +274,57 @@ export default function MapBookingPage() {
         </div>
 
         <div className={`absolute inset-x-3 z-10 flex flex-wrap items-end justify-between gap-2 sm:inset-x-5 ${isFullscreen ? "bottom-4" : "bottom-20 sm:bottom-5"}`}>
-          <div className="rounded-2xl bg-white/95 p-2 shadow-lg backdrop-blur">
-            <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-              Search range
-            </div>
-            <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-end gap-2">
+            {rangeExpanded ? (
+              <div className="rounded-2xl bg-white/95 p-2 shadow-lg backdrop-blur">
+                <div className="mb-1 flex items-center justify-between gap-3 px-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Search range</span>
+                  <button onClick={() => setRangeExpanded(false)} className="text-xs font-semibold text-primary-600">Done</button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => changeRadius(-0.5)} disabled={radiusKm <= 0.5} className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 disabled:opacity-40" aria-label="Decrease search range"><Minus size={14} /></button>
+                  <span className="w-12 text-center text-sm font-bold text-slate-800">{radiusKm} km</span>
+                  <button onClick={() => changeRadius(0.5)} className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-700" aria-label="Increase search range"><Plus size={14} /></button>
+                </div>
+              </div>
+            ) : (
               <button
-                onClick={() => changeRadius(-0.5)}
-                disabled={radiusKm <= 0.5}
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 disabled:opacity-40"
-                aria-label="Decrease search range"
-              ><Minus size={14} /></button>
-              <span className="w-12 text-center text-sm font-bold text-slate-800">{radiusKm} km</span>
-              <button
-                onClick={() => changeRadius(0.5)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-700"
-                aria-label="Increase search range"
-              ><Plus size={14} /></button>
+                onClick={() => setRangeExpanded(true)}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/95 text-primary-700 shadow-lg backdrop-blur hover:bg-white"
+                aria-label={`Expand search range, currently ${radiusKm} kilometers`}
+                title={`Search range: ${radiusKm} km`}
+              ><Gauge size={19} /></button>
+            )}
+
+            <div className="flex gap-1 rounded-2xl bg-white/95 p-1 shadow-lg backdrop-blur">
+              <button onClick={() => setTab("pickup")} className={`rounded-xl px-3 py-2 text-xs font-semibold ${tab === "pickup" ? "bg-primary-600 text-white" : "text-slate-600"}`}>Pickup</button>
+              <button onClick={() => setTab("destination")} className={`rounded-xl px-3 py-2 text-xs font-semibold ${tab === "destination" ? "bg-primary-600 text-white" : "text-slate-600"}`}>Destination</button>
             </div>
+            {isFullscreen && ((!pickup && tab === "pickup") || (!destination && tab === "destination")) && (
+              <div className="relative order-last basis-full sm:order-none sm:basis-auto sm:w-64">
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && tab === "destination") confirmDestination(); }}
+                  placeholder={tab === "pickup" ? "Search pickup or place" : "Search destination or place"}
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white/95 pl-9 pr-3 text-sm shadow-lg outline-none backdrop-blur placeholder:text-slate-400 focus:border-primary-500"
+                />
+                {search.trim().length >= 2 && (
+                  <div className="absolute inset-x-0 bottom-12 max-h-56 overflow-y-auto rounded-xl border border-slate-100 bg-white shadow-xl">
+                    {searchingPlaces ? (
+                      <div className="flex items-center gap-2 px-4 py-3 text-xs text-slate-500"><Loader2 size={14} className="animate-spin" /> Searching places...</div>
+                    ) : placeSuggestions.length > 0 ? placeSuggestions.map((place) => (
+                      <button key={`${place.lng}-${place.lat}-${place.name}`} onClick={() => selectSuggestion(place)} className="flex w-full items-start gap-3 border-b border-slate-50 px-4 py-3 text-left last:border-0 hover:bg-slate-50">
+                        <MapPin size={15} className="mt-0.5 shrink-0 text-primary-600" />
+                        <span className="text-sm text-slate-700">{place.name}</span>
+                      </button>
+                    )) : <p className="px-4 py-3 text-xs text-slate-500">No nearby places found.</p>}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-2">
@@ -312,15 +335,6 @@ export default function MapBookingPage() {
             >
               {locating ? <Loader2 size={15} className="animate-spin" /> : <LocateFixed size={15} />}
               <span className="hidden sm:inline">My location</span>
-            </button>
-            <button
-              onClick={cycleNavigationMode}
-              className="flex h-10 items-center gap-2 rounded-xl bg-white/95 px-3 text-xs font-semibold text-slate-700 shadow-lg backdrop-blur hover:bg-white"
-              aria-label="Toggle bottom navigation"
-              title="Toggle bottom navigation"
-            >
-              <PanelBottom size={15} />
-              <span className="hidden sm:inline">Nav: {navigationMode}</span>
             </button>
             {isFullscreen && (
               <button
@@ -333,56 +347,6 @@ export default function MapBookingPage() {
             )}
           </div>
         </div>
-
-        <div className="absolute right-3 top-[3.75rem] z-10 flex justify-end sm:inset-x-auto sm:left-5 sm:right-auto sm:top-20 sm:justify-start">
-          <div className="flex gap-1 rounded-xl bg-white/95 p-1 shadow-lg backdrop-blur">
-          <button
-            onClick={() => setTab("pickup")}
-            className={`rounded-lg px-3 py-2 text-xs font-semibold ${tab === "pickup" ? "bg-primary-600 text-white" : "text-slate-600"}`}
-          >Pickup</button>
-          <button
-            onClick={() => setTab("destination")}
-            className={`rounded-lg px-3 py-2 text-xs font-semibold ${tab === "destination" ? "bg-primary-600 text-white" : "text-slate-600"}`}
-          >Destination</button>
-          </div>
-        </div>
-
-        {isFullscreen && ((!pickup && tab === "pickup") || (!destination && tab === "destination")) && (
-          <div className="absolute inset-x-3 top-28 z-10 sm:inset-x-5 sm:top-36">
-            <div className="relative">
-              <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && tab === "destination") confirmDestination(); }}
-                placeholder={tab === "pickup" ? "Search pickup, address, or place" : "Search destination, address, or place"}
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white/95 pl-10 pr-4 text-sm shadow-lg outline-none backdrop-blur placeholder:text-slate-400 focus:border-primary-500"
-                autoFocus
-              />
-              {search.trim().length >= 2 && (
-                <div className="absolute inset-x-0 top-12 max-h-56 overflow-y-auto rounded-xl border border-slate-100 bg-white shadow-xl">
-                  {searchingPlaces ? (
-                    <div className="flex items-center gap-2 px-4 py-3 text-xs text-slate-500"><Loader2 size={14} className="animate-spin" /> Searching places...</div>
-                  ) : placeSuggestions.length > 0 ? (
-                    placeSuggestions.map((place) => (
-                      <button
-                        key={`${place.lng}-${place.lat}-${place.name}`}
-                        onClick={() => selectSuggestion(place)}
-                        className="flex w-full items-start gap-3 border-b border-slate-50 px-4 py-3 text-left last:border-0 hover:bg-slate-50"
-                      >
-                        <MapPin size={15} className="mt-0.5 shrink-0 text-primary-600" />
-                        <span className="text-sm text-slate-700">{place.name}</span>
-                      </button>
-                    ))
-                  ) : (
-                    <p className="px-4 py-3 text-xs text-slate-500">No nearby places found.</p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
         {toast && (
           <div className="absolute bottom-24 left-1/2 z-20 -translate-x-1/2 rounded-xl bg-slate-900 px-4 py-3 text-center text-xs font-semibold text-white shadow-xl sm:bottom-28">
@@ -470,7 +434,6 @@ export default function MapBookingPage() {
               onKeyDown={(e) => { if (e.key === "Enter" && tab === "destination") confirmDestination(); }}
               placeholder={tab === "pickup" ? "Search pickup location" : "Search destination"}
               className="w-full h-11 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:bg-white focus:border-primary-500 transition-colors outline-none"
-              autoFocus
             />
             {search.trim().length >= 2 && (
               <div className="absolute inset-x-0 top-12 z-20 max-h-56 overflow-y-auto rounded-xl border border-slate-100 bg-white shadow-xl">
