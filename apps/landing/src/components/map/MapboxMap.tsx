@@ -9,6 +9,27 @@ const TOKEN = import.meta.env.VITE_MAPBOX_TOKEN as string | undefined;
 const DEFAULT_CENTER: [number, number] = [120.6106, 13.1184];
 const ROUTE_SOURCE = "route";
 const ROUTE_LAYER = "route-line";
+const RADIUS_SOURCE = "search-radius";
+const RADIUS_FILL_LAYER = "search-radius-fill";
+const RADIUS_LINE_LAYER = "search-radius-line";
+
+function circleFeature(center: { lat: number; lng: number }, radiusKm: number): Feature {
+  const coordinates: [number, number][] = [];
+  const radius = radiusKm / 111.32;
+  const latitudeScale = Math.cos((center.lat * Math.PI) / 180);
+  for (let i = 0; i <= 64; i += 1) {
+    const angle = (i / 64) * Math.PI * 2;
+    coordinates.push([
+      center.lng + (radius * Math.cos(angle)) / latitudeScale,
+      center.lat + radius * Math.sin(angle),
+    ]);
+  }
+  return {
+    type: "Feature",
+    properties: {},
+    geometry: { type: "Polygon", coordinates: [coordinates] },
+  };
+}
 
 function pinElement(color: string, label: string): HTMLElement {
   const el = document.createElement("div");
@@ -84,6 +105,11 @@ export default function MapboxMap({
   driverLocation,
   userLocation,
   availableDrivers = [],
+  searchRadiusKm,
+  draggablePickup = false,
+  draggableDestination = false,
+  onMovePickup,
+  onMoveDestination,
   className = "",
   showRoute = true,
   onSelect,
@@ -99,6 +125,10 @@ export default function MapboxMap({
   }>({ availableDrivers: new Map() });
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const onMovePickupRef = useRef(onMovePickup);
+  const onMoveDestinationRef = useRef(onMoveDestination);
+  onMovePickupRef.current = onMovePickup;
+  onMoveDestinationRef.current = onMoveDestination;
   const didFitRef = useRef(false);
   const [styleReady, setStyleReady] = useState(false);
 
@@ -115,6 +145,8 @@ export default function MapboxMap({
       attributionControl: true,
     });
     mapRef.current = map;
+    const resizeObserver = new ResizeObserver(() => map.resize());
+    resizeObserver.observe(containerRef.current);
 
     map.on("load", () => {
       map.addSource(ROUTE_SOURCE, {
@@ -132,6 +164,22 @@ export default function MapboxMap({
           "line-opacity": 0.85,
         },
       });
+      map.addSource(RADIUS_SOURCE, {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+      map.addLayer({
+        id: RADIUS_FILL_LAYER,
+        type: "fill",
+        source: RADIUS_SOURCE,
+        paint: { "fill-color": "#16a34a", "fill-opacity": 0.08 },
+      });
+      map.addLayer({
+        id: RADIUS_LINE_LAYER,
+        type: "line",
+        source: RADIUS_SOURCE,
+        paint: { "line-color": "#16a34a", "line-width": 2, "line-opacity": 0.6, "line-dasharray": [2, 2] },
+      });
       setStyleReady(true);
     });
 
@@ -140,6 +188,7 @@ export default function MapboxMap({
     });
 
     return () => {
+      resizeObserver.disconnect();
       map.remove();
       mapRef.current = null;
       markersRef.current = { availableDrivers: new Map() };
@@ -163,9 +212,23 @@ export default function MapboxMap({
         return;
       }
       if (!markersRef.current[key]) {
-        markersRef.current[key] = new mapboxgl.Marker({ element: makeEl() })
+        const draggable = key === "pickup" ? draggablePickup : key === "destination" ? draggableDestination : false;
+        const marker = new mapboxgl.Marker({ element: makeEl(), draggable })
           .setLngLat([point.lng, point.lat])
           .addTo(map);
+        if (key === "pickup") {
+          marker.on("dragend", () => {
+            const position = marker.getLngLat();
+            onMovePickupRef.current?.({ lat: position.lat, lng: position.lng });
+          });
+        }
+        if (key === "destination") {
+          marker.on("dragend", () => {
+            const position = marker.getLngLat();
+            onMoveDestinationRef.current?.({ lat: position.lat, lng: position.lng });
+          });
+        }
+        markersRef.current[key] = marker;
       } else {
         markersRef.current[key]!.setLngLat([point.lng, point.lat]);
       }
@@ -197,7 +260,19 @@ export default function MapboxMap({
         .addTo(map);
       markersRef.current.availableDrivers.set(driver.id, next);
     });
-  }, [pickup, destination, driverLocation, userLocation, availableDrivers]);
+  }, [pickup, destination, driverLocation, userLocation, availableDrivers, draggablePickup, draggableDestination]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !styleReady) return;
+    const source = map.getSource(RADIUS_SOURCE) as mapboxgl.GeoJSONSource | undefined;
+    if (!source) return;
+    const center = pickup ?? userLocation;
+    source.setData({
+      type: "FeatureCollection",
+      features: center && searchRadiusKm ? [circleFeature(center, Math.min(5, searchRadiusKm))] : [],
+    } as FeatureCollection);
+  }, [styleReady, pickup, userLocation, searchRadiusKm]);
 
   // Draw the route and fit the viewport once points are known.
   useEffect(() => {

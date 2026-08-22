@@ -21,6 +21,11 @@ export interface MapProps {
   driverLocation?: LatLng | null;
   userLocation?: LatLng | null;
   availableDrivers?: AvailableDriver[];
+  searchRadiusKm?: number;
+  draggablePickup?: boolean;
+  draggableDestination?: boolean;
+  onMovePickup?: (point: LatLng) => void;
+  onMoveDestination?: (point: LatLng) => void;
   className?: string;
   showRoute?: boolean;
   /** When provided, taps on the map call back with the tapped coordinates. */

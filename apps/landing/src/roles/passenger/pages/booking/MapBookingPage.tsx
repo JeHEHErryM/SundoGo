@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useBookingStore } from "../../stores/booking.store";
-import { ArrowLeft, MapPin, Navigation, Search, X, LocateFixed, Loader2 } from "lucide-react";
+import {
+  ArrowLeft, MapPin, Navigation, Search, X, LocateFixed, Loader2, Maximize2,
+  Minimize2, Minus, Plus, Users, Clock3,
+} from "lucide-react";
 import Map from "../../Map";
 import { reverseGeocode } from "@/lib/geocode";
 import api from "@/lib/api";
@@ -13,6 +16,16 @@ import type { AvailableDriver } from "../../Map";
 // Mamburao, Occidental Mindoro — service area center.
 const MAMBURAO_CENTER = { lat: 13.1184, lng: 120.6106 };
 
+function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const earthRadiusKm = 6371;
+  const lat = ((b.lat - a.lat) * Math.PI) / 180;
+  const lng = ((b.lng - a.lng) * Math.PI) / 180;
+  const value =
+    Math.sin(lat / 2) ** 2 +
+    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(lng / 2) ** 2;
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+}
+
 export default function MapBookingPage() {
   const navigate = useNavigate();
   const { pickup, destination, setPickup, setDestination } = useBookingStore();
@@ -21,6 +34,10 @@ export default function MapBookingPage() {
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState("");
   const [resolving, setResolving] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [radiusKm, setRadiusKm] = useState(2);
+  const [toast, setToast] = useState("");
+  const [now, setNow] = useState(() => new Date());
   const userLocation = usePassengerGeolocation();
 
   const { data: availableDrivers = [] } = useQuery({
@@ -44,6 +61,37 @@ export default function MapBookingPage() {
     },
     refetchInterval: 10000,
   });
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 30000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const searchCenter = pickup ?? userLocation;
+  const nearbyDrivers = searchCenter
+    ? availableDrivers.filter((driver) => distanceKm(searchCenter, driver) <= radiusKm)
+    : [];
+
+  const showToast = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(""), 2800);
+  };
+
+  const changeRadius = (delta: number) => {
+    const next = Math.min(5, Math.max(0.5, radiusKm + delta));
+    if (delta > 0 && radiusKm >= 5) {
+      showToast("Maximum search range is 5 km from pickup.");
+      return;
+    }
+    setRadiusKm(next);
+  };
+
+  const movePoint = async (field: "pickup" | "destination", point: { lat: number; lng: number }) => {
+    const address = await reverseGeocode(point.lat, point.lng);
+    const next = { ...point, address: address === "Selected location" ? "Pinned location" : address };
+    if (field === "pickup") setPickup(next);
+    else setDestination(next);
+  };
 
   const applyPoint = async (lat: number, lng: number, fallbackAddress: string) => {
     setResolving(true);
@@ -126,17 +174,109 @@ export default function MapBookingPage() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col bg-white">
+    <div className={`${isFullscreen ? "fixed inset-0 z-50" : "min-h-dvh"} flex flex-col bg-white`}>
       {/* Map */}
-      <div className="relative flex-1 min-h-[40dvh]">
+      <div className={`relative flex-1 ${isFullscreen ? "min-h-0" : "min-h-[40dvh]"}`}>
         <Map
           pickup={pickup}
           destination={destination}
           userLocation={userLocation}
-          availableDrivers={availableDrivers}
+          availableDrivers={nearbyDrivers}
+          searchRadiusKm={radiusKm}
+          draggablePickup={!!pickup}
+          draggableDestination={!!destination}
+          onMovePickup={(point) => void movePoint("pickup", point)}
+          onMoveDestination={(point) => void movePoint("destination", point)}
           showRoute={!!pickup && !!destination}
           onSelect={(!pickup || !destination) ? handleMapSelect : undefined}
         />
+
+        {/* Map controls remain available in fullscreen mode. */}
+        <div className="absolute inset-x-3 top-3 z-10 flex items-start justify-between gap-2 sm:inset-x-5 sm:top-5">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/95 shadow-lg backdrop-blur hover:bg-white"
+            aria-label="Go back"
+          >
+            <ArrowLeft size={20} className="text-slate-700" />
+          </button>
+          <div className="flex min-w-0 flex-1 justify-center gap-2">
+            <div className="flex items-center gap-2 rounded-full bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-lg backdrop-blur">
+              <Users size={14} className="text-primary-600" />
+              {nearbyDrivers.length} nearby
+            </div>
+            <div className="hidden items-center gap-2 rounded-full bg-white/95 px-3 py-2 text-xs font-medium text-slate-600 shadow-lg backdrop-blur sm:flex">
+              <Clock3 size={14} className="text-slate-400" />
+              {now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </div>
+          </div>
+          <button
+            onClick={() => setIsFullscreen((value) => !value)}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/95 shadow-lg backdrop-blur hover:bg-white"
+            aria-label={isFullscreen ? "Exit fullscreen map" : "Open fullscreen map"}
+          >
+            {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
+        </div>
+
+        <div className="absolute inset-x-3 bottom-4 z-10 flex flex-wrap items-end justify-between gap-2 sm:inset-x-5 sm:bottom-5">
+          <div className="rounded-2xl bg-white/95 p-2 shadow-lg backdrop-blur">
+            <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Search range
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => changeRadius(-0.5)}
+                disabled={radiusKm <= 0.5}
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 disabled:opacity-40"
+                aria-label="Decrease search range"
+              ><Minus size={14} /></button>
+              <span className="w-12 text-center text-sm font-bold text-slate-800">{radiusKm} km</span>
+              <button
+                onClick={() => changeRadius(0.5)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-700"
+                aria-label="Increase search range"
+              ><Plus size={14} /></button>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={useCurrentLocation}
+              disabled={locating}
+              className="flex h-10 items-center gap-2 rounded-xl bg-white/95 px-3 text-xs font-semibold text-slate-700 shadow-lg backdrop-blur hover:bg-white disabled:opacity-60"
+            >
+              {locating ? <Loader2 size={15} className="animate-spin" /> : <LocateFixed size={15} />}
+              <span className="hidden sm:inline">My location</span>
+            </button>
+            {isFullscreen && (
+              <button
+                onClick={handleConfirm}
+                disabled={!pickup || !destination}
+                className="h-10 rounded-xl bg-primary-600 px-4 text-xs font-bold text-white shadow-lg disabled:opacity-40"
+              >
+                Get fare
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="absolute left-3 top-16 z-10 flex gap-1 rounded-xl bg-white/95 p-1 shadow-lg backdrop-blur sm:left-5 sm:top-20">
+          <button
+            onClick={() => setTab("pickup")}
+            className={`rounded-lg px-3 py-2 text-xs font-semibold ${tab === "pickup" ? "bg-primary-600 text-white" : "text-slate-600"}`}
+          >Pickup</button>
+          <button
+            onClick={() => setTab("destination")}
+            className={`rounded-lg px-3 py-2 text-xs font-semibold ${tab === "destination" ? "bg-primary-600 text-white" : "text-slate-600"}`}
+          >Destination</button>
+        </div>
+
+        {toast && (
+          <div className="absolute bottom-24 left-1/2 z-20 -translate-x-1/2 rounded-xl bg-slate-900 px-4 py-3 text-center text-xs font-semibold text-white shadow-xl sm:bottom-28">
+            {toast}
+          </div>
+        )}
 
         {/* Tap hint */}
         {(!pickup || !destination) && (
@@ -155,18 +295,10 @@ export default function MapBookingPage() {
           </div>
         )}
 
-        {/* Back button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center z-10"
-          aria-label="Go back"
-        >
-          <ArrowLeft size={20} className="text-slate-700" />
-        </button>
       </div>
 
       {/* Bottom panel */}
-      <div className="bg-white rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] px-5 pt-5 pb-8 space-y-4">
+      {!isFullscreen && <div className="bg-white rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] px-5 pt-5 pb-8 space-y-4">
         {/* Route dots */}
         <div className="flex items-center gap-3">
           <div className="flex flex-col items-center gap-0.5">
@@ -290,7 +422,7 @@ export default function MapBookingPage() {
           <Navigation size={18} />
           Get Fare Estimate
         </button>
-      </div>
+      </div>}
     </div>
   );
 }
