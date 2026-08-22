@@ -73,7 +73,7 @@ export class DriversController {
 
   @Get('available/:serviceAreaId')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.PASSENGER)
   async getAvailableDrivers(@Param('serviceAreaId') serviceAreaId: string) {
     const drivers = await this.driversService.getAvailableDrivers(serviceAreaId);
     return { success: true, data: drivers };

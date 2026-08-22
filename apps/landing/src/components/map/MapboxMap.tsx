@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { Feature, FeatureCollection, LineString } from "geojson";
-import type { MapProps } from "./MapPlaceholder";
+import type { AvailableDriver, MapProps } from "./MapPlaceholder";
 
 const TOKEN = import.meta.env.VITE_MAPBOX_TOKEN as string | undefined;
 // Mamburao, Occidental Mindoro — service area center.
@@ -39,6 +39,20 @@ function driverElement(): HTMLElement {
   return el.firstElementChild as HTMLElement;
 }
 
+function userElement(): HTMLElement {
+  const el = document.createElement("div");
+  el.innerHTML = `<div style="position:relative;width:22px;height:22px;"><div style="position:absolute;inset:-7px;border-radius:9999px;background:#2563eb33;"></div><div style="position:relative;width:22px;height:22px;border-radius:9999px;background:#2563eb;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35);"></div></div>`;
+  return el.firstElementChild as HTMLElement;
+}
+
+function availableDriverElement(driver: AvailableDriver): HTMLElement {
+  const el = document.createElement("button");
+  el.type = "button";
+  el.title = driver.name ? `Available driver: ${driver.name}` : "Available driver";
+  el.innerHTML = `<div style="width:30px;height:30px;border-radius:9999px;background:#16a34a;border:3px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg></div>`;
+  return el;
+}
+
 /** Fetches a driving route between two points as GeoJSON, or null when unavailable. */
 async function fetchRoute(
   from: { lat: number; lng: number },
@@ -68,6 +82,8 @@ export default function MapboxMap({
   pickup,
   destination,
   driverLocation,
+  userLocation,
+  availableDrivers = [],
   className = "",
   showRoute = true,
   onSelect,
@@ -78,7 +94,9 @@ export default function MapboxMap({
     pickup?: mapboxgl.Marker;
     destination?: mapboxgl.Marker;
     driver?: mapboxgl.Marker;
-  }>({});
+    user?: mapboxgl.Marker;
+    availableDrivers: Map<string, mapboxgl.Marker>;
+  }>({ availableDrivers: new Map() });
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
   const didFitRef = useRef(false);
@@ -124,7 +142,7 @@ export default function MapboxMap({
     return () => {
       map.remove();
       mapRef.current = null;
-      markersRef.current = {};
+      markersRef.current = { availableDrivers: new Map() };
       didFitRef.current = false;
     };
   }, []);
@@ -135,7 +153,7 @@ export default function MapboxMap({
     if (!map) return;
 
     const sync = (
-      key: "pickup" | "destination" | "driver",
+      key: "pickup" | "destination" | "driver" | "user",
       point: { lat: number; lng: number } | null | undefined,
       makeEl: () => HTMLElement,
     ) => {
@@ -156,7 +174,30 @@ export default function MapboxMap({
     sync("pickup", pickup, () => pinElement("#16a34a", "Pickup"));
     sync("destination", destination, () => pinElement("#0f172a", "Destination"));
     sync("driver", driverLocation, driverElement);
-  }, [pickup, destination, driverLocation]);
+    sync("user", userLocation, userElement);
+
+    const activeIds = new Set(availableDrivers.map((driver) => driver.id));
+    markersRef.current.availableDrivers.forEach((marker, id) => {
+      if (!activeIds.has(id)) {
+        marker.remove();
+        markersRef.current.availableDrivers.delete(id);
+      }
+    });
+    availableDrivers.forEach((driver) => {
+      const marker = markersRef.current.availableDrivers.get(driver.id);
+      if (marker) {
+        marker.setLngLat([driver.lng, driver.lat]);
+        return;
+      }
+      const next = new mapboxgl.Marker({ element: availableDriverElement(driver) })
+        .setLngLat([driver.lng, driver.lat])
+        .setPopup(new mapboxgl.Popup({ offset: 18 }).setHTML(
+          `<strong>${driver.name ?? "Available driver"}</strong>${driver.vehicle ? `<br>${driver.vehicle}` : ""}`,
+        ))
+        .addTo(map);
+      markersRef.current.availableDrivers.set(driver.id, next);
+    });
+  }, [pickup, destination, driverLocation, userLocation, availableDrivers]);
 
   // Draw the route and fit the viewport once points are known.
   useEffect(() => {
@@ -181,7 +222,7 @@ export default function MapboxMap({
       } as FeatureCollection);
 
       if (didFitRef.current) return;
-      const points = [pickup, destination, driverLocation].filter(Boolean) as { lat: number; lng: number }[];
+       const points = [pickup, destination, userLocation].filter(Boolean) as { lat: number; lng: number }[];
       if (points.length === 0) return;
 
       const bounds = new mapboxgl.LngLatBounds();
@@ -198,7 +239,7 @@ export default function MapboxMap({
     return () => {
       cancelled = true;
     };
-  }, [styleReady, pickup, destination, driverLocation, showRoute]);
+  }, [styleReady, pickup, destination, driverLocation, userLocation, showRoute]);
 
   return (
     <div

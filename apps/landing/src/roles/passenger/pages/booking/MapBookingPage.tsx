@@ -1,9 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useBookingStore } from "../../stores/booking.store";
 import { ArrowLeft, MapPin, Navigation, Search, X, LocateFixed, Loader2 } from "lucide-react";
 import Map from "../../Map";
 import { reverseGeocode } from "@/lib/geocode";
+import api from "@/lib/api";
+import { usePassengerGeolocation } from "../../hooks/usePassengerGeolocation";
+import type { ApiResponse } from "@sundogo/types";
+import type { AvailableDriver } from "../../Map";
 
 // Mamburao, Occidental Mindoro — service area center.
 const MAMBURAO_CENTER = { lat: 13.1184, lng: 120.6106 };
@@ -16,6 +21,29 @@ export default function MapBookingPage() {
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState("");
   const [resolving, setResolving] = useState(false);
+  const userLocation = usePassengerGeolocation();
+
+  const { data: availableDrivers = [] } = useQuery({
+    queryKey: ["passenger", "available-drivers", "mamburao-default"],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<Array<{
+        id: string;
+        firstName: string;
+        lastName: string;
+        currentLat: number | string;
+        currentLng: number | string;
+        vehicle?: { model?: string; plateNumber?: string } | null;
+      }>>>("/api/drivers/available/mamburao-default");
+      return (data.data ?? []).map<AvailableDriver>((driver) => ({
+        id: driver.id,
+        lat: Number(driver.currentLat),
+        lng: Number(driver.currentLng),
+        name: `${driver.firstName} ${driver.lastName}`.trim(),
+        vehicle: driver.vehicle?.plateNumber ?? driver.vehicle?.model,
+      }));
+    },
+    refetchInterval: 10000,
+  });
 
   const applyPoint = async (lat: number, lng: number, fallbackAddress: string) => {
     setResolving(true);
@@ -104,6 +132,8 @@ export default function MapBookingPage() {
         <Map
           pickup={pickup}
           destination={destination}
+          userLocation={userLocation}
+          availableDrivers={availableDrivers}
           showRoute={!!pickup && !!destination}
           onSelect={(!pickup || !destination) ? handleMapSelect : undefined}
         />

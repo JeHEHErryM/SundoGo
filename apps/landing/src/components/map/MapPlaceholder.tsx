@@ -9,10 +9,18 @@ export interface MapPoint extends LatLng {
   address: string;
 }
 
+export interface AvailableDriver extends LatLng {
+  id: string;
+  name?: string;
+  vehicle?: string;
+}
+
 export interface MapProps {
   pickup?: MapPoint | null;
   destination?: MapPoint | null;
   driverLocation?: LatLng | null;
+  userLocation?: LatLng | null;
+  availableDrivers?: AvailableDriver[];
   className?: string;
   showRoute?: boolean;
   /** When provided, taps on the map call back with the tapped coordinates. */
