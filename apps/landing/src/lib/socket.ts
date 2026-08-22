@@ -2,7 +2,7 @@ import { io, type Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
 
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:3001";
+const API_URL = ((import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:3001").trim();
 
 /** Returns the shared authenticated socket, connecting lazily on first use. */
 export function getSocket(): Socket {
